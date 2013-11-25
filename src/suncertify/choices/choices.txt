@@ -1,0 +1,17 @@
+1. When looking up records in the DB or writing to the DB, I took the "recNo" variable at face value.
+
+Description :
+I look up the record at that row in the file regardless of previous "flags"
+In the event that the record at that index in the DB file is marked as deleted, I return a RecordNotFoundException
+
+Reason :
+The alternative was to read the "flag" byte at the beginning of each record in order to determine if each record existed
+before incrementing the "counter" used to search for the 'n'th record. If the number of rows in the DB file increased 
+significantly then this would either cause extra time in the file reader, increasing lock time, blocking out other bookings
+OR alternatively it would require reading of large amounts of "DB" data into memory.
+
+
+2. Decided to use a combination of the "Name" and "Location" as a key for the DB
+
+Description : 
+Since I am not using a local memory cache, and there is no "unique key" in the DB schema, I decided name + address should suffice.
