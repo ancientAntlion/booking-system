@@ -18,58 +18,72 @@ import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.TableModel;
 
-import suncertify.server.DBConnection;
-
-public class ClientGUI extends JFrame {
+public class ClientView extends JFrame {
 
 	private static final long serialVersionUID = 8980678964743452622L;
 
 	private static final int JFRAME_WIDTH = 950;
 
 	private static final int JFRAME_HEIGHT = 475;
-
-	private final DBConnection dbConnection = new DBConnection();
-
-	String[] columnNames = { "First Name", "Last Name", "Sport", "# of Years",
-			"Vegetarian", "aaaa", "bbb" };
+	
+	private final ClientController controller;
+	
+	final JPanel mainPanel;
+	final JPanel topPanel;
+	final JPanel bottomPanel;
+	final JPanel tablePanel;
+	final JPanel buttonPanel;
+	final JPanel searchButtonPanel;
+	final JTextField nameSearchBar;
+	final JTextField locationSearchBar;
+	final JLabel nameSearchLabel;
+	final JLabel locationSearchLabel;
+	final JLabel whitespaceLabel;
+	final JTable table;
+	TableModel tableModel;
+	final JScrollPane scrollPane;
+	final JButton bookButton;
+	final JButton unBookButton;
+	final JButton searchButton;
+	
 
 	/**
 	 * The constructor for the client GUI
 	 */
-	public ClientGUI() {
+	public ClientView() {
 
 		// Set properties
-		setTitle("Test Application");
+		setTitle("URLyBird");
 		setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
 		setBackground(Color.GRAY);
+		
+		controller = new ClientController();
 
 		// Initialize all components
-		final JPanel mainPanel = new JPanel();
+		mainPanel = new JPanel();
 
-		final JPanel topPanel = new JPanel();
-		final JPanel sidePanel = new JPanel();
-		final JPanel bottomPanel = new JPanel();
-		final JPanel tablePanel = new JPanel();
-		final JPanel buttonPanel = new JPanel();
-		final JPanel searchButtonPanel = new JPanel();
-		final JTextField nameSearchBar = new JTextField();
-		final JTextField locationSearchBar = new JTextField();
-		final JLabel nameSearchLabel = new JLabel("Name");
-		final JLabel locationSearchLabel = new JLabel("Location");
-		final JLabel whitespaceLabel = new JLabel();
+		topPanel = new JPanel();
+		bottomPanel = new JPanel();
+		tablePanel = new JPanel();
+		buttonPanel = new JPanel();
+		searchButtonPanel = new JPanel();
+		nameSearchBar = new JTextField();
+		locationSearchBar = new JTextField();
+		nameSearchLabel = new JLabel("Name");
+		locationSearchLabel = new JLabel("Location");
+		whitespaceLabel = new JLabel();
 
 		whitespaceLabel.setVisible(false);
 
-		final JTable table = initTable();
-		final JScrollPane scrollPane = new JScrollPane(table);
-		// scrollPane.requestFocusInWindow();
+		tableModel = controller.getAllEntries();
+		table = initTable();
+		scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-		final JButton bookButton = createBookButton();
-		final JButton unBookButton = createUnBookButton();
-		final JButton searchButton = createSearchButton();
-
-		// addButton.requestFocusInWindow();
+		bookButton = createBookButton();
+		unBookButton = createUnBookButton();
+		searchButton = createSearchButton();
 
 		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 
@@ -125,18 +139,14 @@ public class ClientGUI extends JFrame {
 	}
 
 	public static void main(final String[] args) {
-		final ClientGUI clientGUI = new ClientGUI();
+		final ClientView clientGUI = new ClientView();
 		clientGUI.setVisible(true);
 
 	}
 
-	private JTable initTable() {
-		final Object[][] dbEntries = dbConnection.getAllEntries();
-
-		final JTable table = new JTable(new UneditableTableModel(dbEntries,
-				columnNames));
-
-		// table.setRowSelectionAllowed(true);
+	private JTable initTable() {		
+		final JTable table = new JTable(tableModel);
+		
 		table.setCellSelectionEnabled(true);
 		table.setFillsViewportHeight(true);
 
@@ -145,7 +155,17 @@ public class ClientGUI extends JFrame {
 
 		return table;
 	}
-
+	
+	private void updateTable(final String name, final String location) {
+		if(name == null && location == null){
+			tableModel = controller.getAllEntries();
+		}else{
+			tableModel = controller.getSpecificEntries(name, location);
+		}
+		
+		table.setModel(tableModel);
+	}
+		
 	private JButton createBookButton() {
 		final JButton bookButton = new JButton("Create Booking");
 
@@ -183,8 +203,8 @@ public class ClientGUI extends JFrame {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				// Execute when button is pressed
 				System.out.println("Search Button Clicked");
+				updateTable(nameSearchBar.getText(), locationSearchBar.getText());
 			}
 		});
 

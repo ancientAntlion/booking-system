@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataAccessObject {
 
-	private final String fileLocation = "src\\suncertify\\db\\db-1x3.db";
+	private final String dbLocation;
 
 	private final String whitespaceString = "                                                                ";
 
@@ -26,11 +28,15 @@ public class DataAccessObject {
 	private final int firstRecordNameIndex = firstRecordIndex + 1;
 
 	private final int numberOfFieldsInRecord = 7;
+	
+	public DataAccessObject(final String dbLocation){
+		this.dbLocation = dbLocation;
+	}
 
 	public String[] read(final int recNo) throws RecordNotFoundException {
 
 		try {
-			final RandomAccessFile raFile = new RandomAccessFile(fileLocation,
+			final RandomAccessFile raFile = new RandomAccessFile(dbLocation,
 					"rw");
 			final int requestedRecordIndex = firstRecordIndex + recNo
 					* singleRecordByteSize;
@@ -82,7 +88,7 @@ public class DataAccessObject {
 			SecurityException {
 
 		try {
-			final RandomAccessFile raFile = new RandomAccessFile(fileLocation,
+			final RandomAccessFile raFile = new RandomAccessFile(dbLocation,
 					"rw");
 
 			final int requestedRecordIndex = firstRecordNameIndex + recNo
@@ -125,7 +131,7 @@ public class DataAccessObject {
 	public void delete(final int recNo, final long lockCookie)
 			throws RecordNotFoundException, SecurityException {
 		try {
-			final RandomAccessFile raFile = new RandomAccessFile(fileLocation,
+			final RandomAccessFile raFile = new RandomAccessFile(dbLocation,
 					"rw");
 
 			final int requestedRecordIndex = firstRecordIndex + recNo
@@ -157,6 +163,42 @@ public class DataAccessObject {
 			System.out.println(ioe);
 		}
 	}
+	
+	public int[] find(String[] criteria) {
+		final List<Integer> resultList = new ArrayList<Integer>();
+		try{
+			for(int i = 0;;i++){
+				boolean isMatch = true;
+				
+				final String[] entry = read(i);
+				
+				for (int j = 0; j<criteria.length; j++){
+					
+					if(criteria[j] != null){
+						if(!entry[j].startsWith(criteria[j])){
+							isMatch = false;
+							continue;
+						}
+					}
+				}
+				
+				if(isMatch){
+					resultList.add(i);
+				}
+				
+			}
+		}catch(RecordNotFoundException rnfe){
+			
+		}
+		
+		final int[] results = new int[resultList.size()];
+		for(int i = 0; i<resultList.size(); i++){
+			results[i] = resultList.get(i);
+		}
+
+		return results;
+
+	}
 
 	public void create(final String[] data) throws DuplicateKeyException {
 		try {
@@ -166,7 +208,7 @@ public class DataAccessObject {
 			}
 			final long writeIndex = getFirstWritableIndex();
 
-			final RandomAccessFile raFile = new RandomAccessFile(fileLocation,
+			final RandomAccessFile raFile = new RandomAccessFile(dbLocation,
 					"rw");
 			final byte[] writeableBytes = constructWritableByteArray(data);
 
@@ -218,7 +260,7 @@ public class DataAccessObject {
 	}
 
 	private long getFirstWritableIndex() throws IOException {
-		final RandomAccessFile raFile = new RandomAccessFile(fileLocation, "rw");
+		final RandomAccessFile raFile = new RandomAccessFile(dbLocation, "rw");
 
 		try {
 			for (int i = firstRecordIndex; i < raFile.length(); i = i
@@ -243,7 +285,7 @@ public class DataAccessObject {
 	}
 
 	private boolean isDuplicateKey(final String nameAddress) throws IOException {
-		final RandomAccessFile raFile = new RandomAccessFile(fileLocation, "rw");
+		final RandomAccessFile raFile = new RandomAccessFile(dbLocation, "rw");
 		final byte[] uniqueNameByteArray = new byte[uniqueKeySize / 2];
 		final byte[] uniqueLocationByteArray = new byte[uniqueKeySize / 2];
 

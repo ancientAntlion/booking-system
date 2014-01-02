@@ -2,44 +2,32 @@ package suncertify.db;
 
 public class Data implements DB {
 	
-	public static void main(String[] args) {
-		Data data = new Data();
-		try {
-			data.read(2);
-		} catch (RecordNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+	private final DataAccessObject dao;
+	
+	public Data(final String dbLocation){
+		dao = new DataAccessObject(dbLocation);
 	}
 	
 	@Override
 	public String[] read(int recNo) throws RecordNotFoundException {
-		
-		DataAccessObject dao = new DataAccessObject();
-		
 		return dao.read(recNo);
-		
 	}
 
 	@Override
 	public void update(int recNo, String[] data, long lockCookie)
 			throws RecordNotFoundException, SecurityException {
-		// TODO Auto-generated method stub
-		
+		dao.update(recNo, data, lockCookie);
 	}
 
 	@Override
 	public void delete(int recNo, long lockCookie)
 			throws RecordNotFoundException, SecurityException {
-		// TODO Auto-generated method stub
-		
+		dao.delete(recNo, lockCookie);
 	}
 
 	@Override
 	public int[] find(String[] criteria) {
-		// TODO Auto-generated method stub
-		return null;
+		return dao.find(criteria);
 	}
 
 	@Override
