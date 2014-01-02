@@ -7,11 +7,10 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -50,11 +49,17 @@ public class ClientGUI extends JFrame {
 
 		final JPanel topPanel = new JPanel();
 		final JPanel sidePanel = new JPanel();
+		final JPanel bottomPanel = new JPanel();
 		final JPanel tablePanel = new JPanel();
 		final JPanel buttonPanel = new JPanel();
 		final JPanel searchButtonPanel = new JPanel();
-		final JTextField nameSearchBar = createNameSearchBar();
-		final JTextField locationSearchBar = createLocationSearchBar();
+		final JTextField nameSearchBar = new JTextField();
+		final JTextField locationSearchBar = new JTextField();
+		final JLabel nameSearchLabel = new JLabel("Name");
+		final JLabel locationSearchLabel = new JLabel("Location");
+		final JLabel whitespaceLabel = new JLabel();
+
+		whitespaceLabel.setVisible(false);
 
 		final JTable table = initTable();
 		final JScrollPane scrollPane = new JScrollPane(table);
@@ -75,22 +80,30 @@ public class ClientGUI extends JFrame {
 		mainPanel.setPreferredSize(new Dimension(JFRAME_WIDTH, JFRAME_HEIGHT));
 		mainPanel.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 
-		buttonPanel.setLayout(new GridLayout(3, 1, 10, 10));
+		buttonPanel.setLayout(new GridLayout(1, 2, 50, 0));
 		buttonPanel.setBorder(new EmptyBorder(new Insets(25, 0, 15, 50)));
 		buttonPanel.add(bookButton);
 		buttonPanel.add(unBookButton);
 
-		sidePanel.setLayout(new BorderLayout());
-		sidePanel.add(buttonPanel, BorderLayout.NORTH);
+		bottomPanel.setLayout(new BorderLayout());
+		bottomPanel.setBorder(new EmptyBorder(new Insets(10, 150, 10, 150)));
+		bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
-		topPanel.setLayout(new GridLayout(1, 3, 0, 0));
+		// sidePanel.setLayout(new BorderLayout());
+		// sidePanel.add(buttonPanel, BorderLayout.NORTH);
+
+		topPanel.setLayout(new GridLayout(2, 3, 10, 0));
+		topPanel.setBorder(new EmptyBorder(new Insets(5, 130, 5, 0)));
 		// topPanel.setPreferredSize(new Dimension(700, 100));
+		topPanel.add(nameSearchLabel);
+		topPanel.add(locationSearchLabel);
+		topPanel.add(whitespaceLabel);
 		topPanel.add(nameSearchBar);
 		topPanel.add(locationSearchBar);
 		topPanel.add(searchButtonPanel);
 
 		tablePanel.setLayout(new BorderLayout());
-		tablePanel.setBorder(new EmptyBorder(new Insets(15, 0, 15, 50)));
+		tablePanel.setBorder(new EmptyBorder(new Insets(15, 10, 5, 10)));
 		// tablePanel.setPreferredSize(new Dimension(700, 475));
 		tablePanel.add(scrollPane);
 
@@ -101,7 +114,7 @@ public class ClientGUI extends JFrame {
 
 		mainPanel.add(topPanel, BorderLayout.PAGE_START);
 		mainPanel.add(tablePanel, BorderLayout.CENTER);
-		mainPanel.add(sidePanel, BorderLayout.EAST);
+		mainPanel.add(bottomPanel, BorderLayout.PAGE_END);
 
 		getContentPane().add(mainPanel);
 
@@ -176,34 +189,6 @@ public class ClientGUI extends JFrame {
 		});
 
 		return searchButton;
-	}
-
-	private JTextField createNameSearchBar() {
-		final JTextField nameSearchBar = new JTextField("Name");
-
-		nameSearchBar.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(final FocusEvent fEvt) {
-				final JTextField tField = (JTextField) fEvt.getSource();
-				tField.selectAll();
-			}
-		});
-
-		return nameSearchBar;
-	}
-
-	private JTextField createLocationSearchBar() {
-		final JTextField locationSearchBar = new JTextField("Location");
-
-		locationSearchBar.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(final FocusEvent fEvt) {
-				final JTextField tField = (JTextField) fEvt.getSource();
-				tField.selectAll();
-			}
-		});
-
-		return locationSearchBar;
 	}
 
 }
