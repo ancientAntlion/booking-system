@@ -11,14 +11,19 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableModel;
+
+import suncertify.ui.exceptions.InvalidCustomerIDException;
+import suncertify.ui.exceptions.RecordAlreadyBookedException;
 
 public class ClientView extends JFrame {
 
@@ -27,9 +32,9 @@ public class ClientView extends JFrame {
 	private static final int JFRAME_WIDTH = 950;
 
 	private static final int JFRAME_HEIGHT = 475;
-	
+
 	private final ClientController controller;
-	
+
 	final JPanel mainPanel;
 	final JPanel topPanel;
 	final JPanel bottomPanel;
@@ -47,7 +52,6 @@ public class ClientView extends JFrame {
 	final JButton bookButton;
 	final JButton unBookButton;
 	final JButton searchButton;
-	
 
 	/**
 	 * The constructor for the client GUI
@@ -58,7 +62,7 @@ public class ClientView extends JFrame {
 		setTitle("URLyBird");
 		setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
 		setBackground(Color.GRAY);
-		
+
 		controller = new ClientController();
 
 		// Initialize all components
@@ -79,7 +83,9 @@ public class ClientView extends JFrame {
 
 		tableModel = controller.getAllEntries();
 		table = initTable();
-		scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane = new JScrollPane(table,
+				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
 		bookButton = createBookButton();
 		unBookButton = createUnBookButton();
@@ -144,9 +150,9 @@ public class ClientView extends JFrame {
 
 	}
 
-	private JTable initTable() {		
+	private JTable initTable() {
 		final JTable table = new JTable(tableModel);
-		
+
 		table.setCellSelectionEnabled(true);
 		table.setFillsViewportHeight(true);
 
@@ -155,17 +161,17 @@ public class ClientView extends JFrame {
 
 		return table;
 	}
-	
+
 	private void updateTable(final String name, final String location) {
-		if(name == null && location == null){
+		if (name == null && location == null) {
 			tableModel = controller.getAllEntries();
-		}else{
+		} else {
 			tableModel = controller.getSpecificEntries(name, location);
 		}
-		
+
 		table.setModel(tableModel);
 	}
-		
+
 	private JButton createBookButton() {
 		final JButton bookButton = new JButton("Create Booking");
 
@@ -174,6 +180,10 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				// Execute when button is pressed
+				// controller.reserveRoom(table.getSelectedRow(), customerID);
+
+				handleBooking();
+
 				System.out.println("Create Booking Button Clicked");
 			}
 		});
@@ -204,11 +214,35 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				System.out.println("Search Button Clicked");
-				updateTable(nameSearchBar.getText(), locationSearchBar.getText());
+				updateTable(nameSearchBar.getText(),
+						locationSearchBar.getText());
 			}
 		});
 
 		return searchButton;
 	}
 
+	private void handleBooking() {
+		boolean inputAccepted = false;
+		String customerID;
+		int recNo;
+		while (!inputAccepted) {
+			try {
+				customerID = JOptionPane
+						.showInputDialog("Enter Customer ID (8 Digits)");
+				recNo = table.getSelectedRow();
+
+				controller.reserveRoom(recNo, customerID);
+
+				inputAccepted = true;
+
+			} catch (final InvalidCustomerIDException e) {
+				JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
+			} catch (final RecordAlreadyBookedException e) {
+				JOptionPane.showMessageDialog(mainPanel,
+						"Record already booked!");
+			}
+		}
+
+	}
 }
