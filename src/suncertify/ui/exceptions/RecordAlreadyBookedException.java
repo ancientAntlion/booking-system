@@ -4,16 +4,14 @@ package suncertify.ui.exceptions;
  * @author eaarcot
  * 
  */
-public class RecordAlreadyBookedException extends Exception {
+public class RecordAlreadyBookedException extends RecordBookingException {
+	
+	private static final long serialVersionUID = 145483798743149230L;
+	private String customerId;
 
-	private static final long serialVersionUID = -3257012412705615512L;
-
-	private final String customerId;
-	private final int recNo;
-
-	public RecordAlreadyBookedException(final String customerId, final int recNo) {
+	public RecordAlreadyBookedException(final int recNo, final String customerId) {
+		super(recNo);
 		this.customerId = customerId;
-		this.recNo = recNo;
 	}
 
 	/**
@@ -21,13 +19,6 @@ public class RecordAlreadyBookedException extends Exception {
 	 */
 	public String getCustomerId() {
 		return customerId;
-	}
-
-	/**
-	 * @return the recNo
-	 */
-	public int getRecNo() {
-		return recNo;
 	}
 
 }

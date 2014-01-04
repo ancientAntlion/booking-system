@@ -1,22 +1,20 @@
-package suncertify.records;
+package suncertify.ui.records;
 
 import java.util.Date;
 
 public class Record {
 	
-	private boolean isValidRecord;
 	private String hotelName;
 	private String hotelLocation;
-	private int roomSize;
-	private boolean isSmokingRoom;
-	private double roomRate;
-	private Date arrivalDate;
+	private String roomSize;
+	private String isSmokingRoom;
+	private String roomRate;
+	private String arrivalDate;
 	private String customerID;
 	
-	public Record(final boolean isValidRecord, final String hotelName, final String hotelLocation,
-			final int roomSize, final boolean smokingRoom, final double roomRate, final Date arrivalDate,
+	public Record(final String hotelName, final String hotelLocation,
+			final String roomSize, final String smokingRoom, final String roomRate, final String arrivalDate,
 			final String customerID){
-		this.setValidRecord(isValidRecord);
 		this.setHotelName(hotelName);
 		this.setHotelLocation(hotelLocation);
 		this.setRoomSize(roomSize);
@@ -42,35 +40,35 @@ public class Record {
 		this.hotelLocation = hotelLocation;
 	}
 
-	public int getRoomSize() {
+	public String getRoomSize() {
 		return roomSize;
 	}
 
-	public void setRoomSize(int roomSize) {
+	public void setRoomSize(String roomSize) {
 		this.roomSize = roomSize;
 	}
 
-	public boolean isSmokingRoom() {
+	public String isSmokingRoom() {
 		return isSmokingRoom;
 	}
 
-	public void setSmokingRoom(boolean smokingRoom) {
+	public void setSmokingRoom(String smokingRoom) {
 		this.isSmokingRoom = smokingRoom;
 	}
 
-	public double getRoomRate() {
+	public String getRoomRate() {
 		return roomRate;
 	}
 
-	public void setRoomRate(double roomRate) {
+	public void setRoomRate(String roomRate) {
 		this.roomRate = roomRate;
 	}
 
-	public Date getArrivalDate() {
+	public String getArrivalDate() {
 		return arrivalDate;
 	}
 
-	public void setArrivalDate(Date arrivalDate) {
+	public void setArrivalDate(String arrivalDate) {
 		this.arrivalDate = arrivalDate;
 	}
 
@@ -80,17 +78,7 @@ public class Record {
 
 	public void setCustomerID(String customerID) {
 		this.customerID = customerID;
-	}
-
-	public boolean isValidRecord() {
-		return isValidRecord;
-	}
-
-	public void setValidRecord(boolean isValidRecord) {
-		this.isValidRecord = isValidRecord;
-	}
-	
-	
+	}	
 	
 }
 

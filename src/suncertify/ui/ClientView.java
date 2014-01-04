@@ -24,6 +24,7 @@ import javax.swing.table.TableModel;
 
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.RecordAlreadyBookedException;
+import suncertify.ui.exceptions.RecordNotBookedException;
 
 public class ClientView extends JFrame {
 
@@ -151,18 +152,11 @@ public class ClientView extends JFrame {
 	}
 
 	private JTable initTable() {
-		final JTable table = new JTable(tableModel);
-
-		table.setCellSelectionEnabled(true);
-		table.setFillsViewportHeight(true);
-
-		table.setRowSelectionAllowed(true);
-		table.setCellSelectionEnabled(false);
-
-		return table;
+		return new JTable(tableModel);
 	}
 
 	private void updateTable(final String name, final String location) {
+		
 		if (name == null && location == null) {
 			tableModel = controller.getAllEntries();
 		} else {
@@ -179,9 +173,6 @@ public class ClientView extends JFrame {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				// Execute when button is pressed
-				// controller.reserveRoom(table.getSelectedRow(), customerID);
-
 				handleBooking();
 
 				System.out.println("Create Booking Button Clicked");
@@ -198,7 +189,8 @@ public class ClientView extends JFrame {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				// Execute when button is pressed
+				handleUnbooking();
+				
 				System.out.println("Remove Booking Button Clicked");
 			}
 		});
@@ -214,8 +206,7 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				System.out.println("Search Button Clicked");
-				updateTable(nameSearchBar.getText(),
-						locationSearchBar.getText());
+				updateTable(nameSearchBar.getText(), locationSearchBar.getText());
 			}
 		});
 
@@ -229,13 +220,17 @@ public class ClientView extends JFrame {
 		while (!inputAccepted) {
 			try {
 				customerID = JOptionPane
-						.showInputDialog("Enter Customer ID (8 Digits)");
+						.showInputDialog(mainPanel, "Enter Customer ID (8 Digits)");
+				if(customerID == null){
+					break;
+				}
 				recNo = table.getSelectedRow();
 
 				controller.reserveRoom(recNo, customerID);
-
+				
+				updateTable(nameSearchBar.getText(), locationSearchBar.getText());
+				
 				inputAccepted = true;
-
 			} catch (final InvalidCustomerIDException e) {
 				JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
 			} catch (final RecordAlreadyBookedException e) {
@@ -243,6 +238,20 @@ public class ClientView extends JFrame {
 						"Record already booked!");
 			}
 		}
-
 	}
+	
+	private void handleUnbooking() {
+		try {
+			int recNo = table.getSelectedRow();
+
+			controller.unreserveRoom(recNo);
+			
+			updateTable(nameSearchBar.getText(), locationSearchBar.getText());
+		} catch (final RecordNotBookedException e) {
+			JOptionPane.showMessageDialog(mainPanel,
+					"Record has not been booked!");
+		}
+		
+	}
+	
 }
