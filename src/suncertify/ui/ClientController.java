@@ -1,92 +1,111 @@
 package suncertify.ui;
 
-import java.util.ArrayList;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.List;
 
 import javax.swing.table.TableModel;
 
-import suncertify.db.RecordNotFoundException;
-import suncertify.db.SecurityException;
-import suncertify.server.DBConnection;
+import suncertify.server.LocalBookingService;
+import suncertify.server.LocalBookingServiceImpl;
+import suncertify.server.RemoteBookingService;
+import suncertify.server.exceptions.BookingServiceException;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.RecordAlreadyBookedException;
 import suncertify.ui.exceptions.RecordNotBookedException;
 
 public class ClientController {
 
-	private final DBConnection dbConnection;
+	private final LocalBookingService localBookingService;
+	
+	private final RemoteBookingService remoteBookingService;
+	
+	private final Mode mode;
 
 	String[] columnNames = { "Name", "Location", "Size", "Smoking", "Rate", "Date", "Owner" };
 	
 	public static String customerFieldWhiteSpace = "        ";
 
-	public ClientController() {
-		dbConnection = new DBConnection();
+	public ClientController(final Mode mode) throws RemoteException, NotBoundException {
+		this.mode = mode;
+		if(this.mode.equals(Mode.LOCAL)){
+			localBookingService = new LocalBookingServiceImpl("src\\suncertify\\db\\db-1x3.db");
+			remoteBookingService = null;
+		}else{
+			localBookingService = null;
+            String name = "BookingService";
+            Registry registry = LocateRegistry.getRegistry(1099);
+            remoteBookingService = (RemoteBookingService) registry.lookup(name);
+            System.out.println("Connected to BookingService");
+		}
 	}
 
 	public TableModel getAllEntries() {
-		final List<String[]> entryList = new ArrayList<String[]>();
+		
 		try {
-			for (int i = 0;; i++) {
-				entryList.add(dbConnection.read(i));
+			final List<String[]> allEntries;
+			if(this.mode.equals(Mode.LOCAL)){
+				allEntries = localBookingService.findAll();
+				return new ClientTableModel(allEntries);
+			}else{
+				try {
+					allEntries = remoteBookingService.findAll();
+					return new ClientTableModel(allEntries);
+				} catch (RemoteException e) {
+					//TODO handle remote exception
+				}
 			}
-		} catch (final RecordNotFoundException rnfe) {
-			// End of file reached, all records read, carry on
+		} catch (BookingServiceException e) {
+			//TODO handle exception
 		}
-
-		final List<String[]> allEntries = new ArrayList<String[]>(); 
-
-		for (int i = 0; i < entryList.size(); i++) {
-			final String[] singleEntry = entryList.get(i);
-			allEntries.add(singleEntry);
-		}
-
-		return new ClientTableModel(allEntries);
+		
+		return null;
+		
 	}
 
 	public TableModel getSpecificEntries(final String name,
-			final String location) {
-		final String[] criteria = constructCriteria(name, location);
-		final List<String[]> entryList = new ArrayList<String[]>();
-
-		final int[] matchedEntries = dbConnection.find(criteria);
-
+			final String location) {	
 		try {
-			for (final int i : matchedEntries) {
-				entryList.add(dbConnection.read(i));
+			final List<String[]> matchingEntries;
+			if(this.mode.equals(Mode.LOCAL)){
+				matchingEntries = localBookingService.find(name, location);
+				return new ClientTableModel(matchingEntries);
+			}else{
+				try {
+					matchingEntries = remoteBookingService.find(name, location);
+					return new ClientTableModel(matchingEntries);
+				} catch (RemoteException e) {
+					//TODO handle remote exception
+				}
 			}
-		} catch (final RecordNotFoundException rnfe) {
-			// End of file reached, all records read, carry on
+			
+		} catch (BookingServiceException e) {
+			//TODO handle exception
 		}
 
-		final List<String[]> allEntries = new ArrayList<String[]>(); 
-
-		for (int i = 0; i < entryList.size(); i++) {
-			final String[] singleEntry = entryList.get(i);
-			allEntries.add(singleEntry);
-		}
-
-		return new ClientTableModel(allEntries);
+		return null;
 	}
 
 	public void reserveRoom(final int recNo, final String customerID)
 			throws RecordAlreadyBookedException, InvalidCustomerIDException {
+		if (!isValidCustomerID(customerID)) {
+			throw new InvalidCustomerIDException(customerID);
+		}
+			
 		try {
-			if (!isValidCustomerID(customerID)) {
-				throw new InvalidCustomerIDException(customerID);
+			if(this.mode.equals(Mode.LOCAL)){
+				localBookingService.book(recNo, customerID);
+			}else{
+				try {
+					remoteBookingService.book(recNo, customerID);
+				} catch (RemoteException e) {
+					//TODO handle remote exception
+				}
 			}
-
-			final String[] record = dbConnection.read(recNo);
-			if (record[6].trim().isEmpty()) {
-				record[6] = customerID;
-				dbConnection.update(recNo, record, 1L);
-			} else {
-				throw new RecordAlreadyBookedException(recNo, record[6]);
-			}
-		} catch (final RecordNotFoundException e) {
-			// TODO HANDLE THIS
-		} catch (final SecurityException se) {
-			// TODO HANDLE THIS
+		} catch (BookingServiceException e) {
+			//TODO handle exception
 		}
 
 	}
@@ -94,27 +113,19 @@ public class ClientController {
 	public void unreserveRoom(final int recNo)
 			throws RecordNotBookedException {
 		try {
-			final String[] record = dbConnection.read(recNo);
-			if (record[6].trim().isEmpty()) {
-				throw new RecordNotBookedException(recNo);
-			} else {
-				record[6] = customerFieldWhiteSpace;
-				dbConnection.update(recNo, record, 1L);
+			if(this.mode.equals(Mode.LOCAL)){
+				localBookingService.unbook(recNo);
+			}else{
+				try {
+					remoteBookingService.unbook(recNo);
+				} catch (RemoteException e) {
+					//TODO handle remote exception
+				}
 			}
-		} catch (final RecordNotFoundException e) {
-			// TODO HANDLE THIS
-		} catch (final SecurityException se) {
-			// TODO HANDLE THIS
+		} catch (BookingServiceException e) {
+			//TODO handle exception
 		}
 
-	}
-
-	private String[] constructCriteria(final String name, final String location) {
-		final String[] criteria = new String[7];
-		criteria[0] = name;
-		criteria[1] = location;
-
-		return criteria;
 	}
 	
 	private boolean isValidCustomerID(final String customerID){

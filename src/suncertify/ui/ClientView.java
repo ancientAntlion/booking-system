@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -56,19 +58,21 @@ public class ClientView extends JFrame {
 
 	/**
 	 * The constructor for the client GUI
+	 * @throws NotBoundException 
+	 * @throws RemoteException 
 	 */
-	public ClientView() {
+	public ClientView() throws RemoteException, NotBoundException {
 
 		// Set properties
 		setTitle("URLyBird");
 		setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
 		setBackground(Color.GRAY);
-
-		controller = new ClientController();
-
+		
 		// Initialize all components
 		mainPanel = new JPanel();
 
+		controller = new ClientController(Mode.REMOTE);
+		
 		topPanel = new JPanel();
 		bottomPanel = new JPanel();
 		tablePanel = new JPanel();
@@ -146,8 +150,13 @@ public class ClientView extends JFrame {
 	}
 
 	public static void main(final String[] args) {
-		final ClientView clientGUI = new ClientView();
-		clientGUI.setVisible(true);
+		try{
+			final ClientView clientGUI = new ClientView();
+			clientGUI.setVisible(true);
+		}catch(Exception e){
+			JOptionPane.showMessageDialog(null, "Exception encountered : " + e);
+//			JOptionPane.showInputDialog("Exception encountered : " + e);
+		}
 
 	}
 
@@ -224,6 +233,7 @@ public class ClientView extends JFrame {
 				if(customerID == null){
 					break;
 				}
+				//TODO using selected row is not good enough when results are filtered, fix this
 				recNo = table.getSelectedRow();
 
 				controller.reserveRoom(recNo, customerID);
@@ -242,6 +252,7 @@ public class ClientView extends JFrame {
 	
 	private void handleUnbooking() {
 		try {
+			//TODO using selected row is not good enough when results are filtered, fix this
 			int recNo = table.getSelectedRow();
 
 			controller.unreserveRoom(recNo);
