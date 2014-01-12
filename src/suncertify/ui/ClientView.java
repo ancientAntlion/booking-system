@@ -71,7 +71,7 @@ public class ClientView extends JFrame {
 		// Initialize all components
 		mainPanel = new JPanel();
 
-		controller = new ClientController(Mode.REMOTE);
+		controller = new ClientController(Mode.LOCAL);
 		
 		topPanel = new JPanel();
 		bottomPanel = new JPanel();
