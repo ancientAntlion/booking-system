@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
@@ -15,6 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -25,6 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableModel;
 
 import suncertify.ui.exceptions.InvalidCustomerIDException;
+import suncertify.ui.exceptions.InvalidModeException;
 import suncertify.ui.exceptions.RecordAlreadyBookedException;
 import suncertify.ui.exceptions.RecordNotBookedException;
 
@@ -61,7 +64,7 @@ public class ClientView extends JFrame {
 	 * @throws NotBoundException 
 	 * @throws RemoteException 
 	 */
-	public ClientView() throws RemoteException, NotBoundException {
+	public ClientView(final Mode mode) throws RemoteException, NotBoundException {
 
 		// Set properties
 		setTitle("URLyBird");
@@ -71,23 +74,26 @@ public class ClientView extends JFrame {
 		// Initialize all components
 		mainPanel = new JPanel();
 
-		controller = new ClientController(Mode.LOCAL);
+		controller = new ClientController(mode);
 		
 		topPanel = new JPanel();
 		bottomPanel = new JPanel();
 		tablePanel = new JPanel();
 		buttonPanel = new JPanel();
 		searchButtonPanel = new JPanel();
+		
 		nameSearchBar = new JTextField();
 		locationSearchBar = new JTextField();
+		
 		nameSearchLabel = new JLabel("Name");
 		locationSearchLabel = new JLabel("Location");
 		whitespaceLabel = new JLabel();
-
 		whitespaceLabel.setVisible(false);
 
 		tableModel = controller.getAllEntries();
-		table = initTable();
+		table = initTable(tableModel);
+		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
+
 		scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -95,8 +101,6 @@ public class ClientView extends JFrame {
 		bookButton = createBookButton();
 		unBookButton = createUnBookButton();
 		searchButton = createSearchButton();
-
-		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 
 		searchButtonPanel.setLayout(new BorderLayout());
 		searchButtonPanel.add(searchButton, BorderLayout.WEST);
@@ -114,12 +118,8 @@ public class ClientView extends JFrame {
 		bottomPanel.setBorder(new EmptyBorder(new Insets(10, 150, 10, 150)));
 		bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
-		// sidePanel.setLayout(new BorderLayout());
-		// sidePanel.add(buttonPanel, BorderLayout.NORTH);
-
 		topPanel.setLayout(new GridLayout(2, 3, 10, 0));
 		topPanel.setBorder(new EmptyBorder(new Insets(5, 130, 5, 0)));
-		// topPanel.setPreferredSize(new Dimension(700, 100));
 		topPanel.add(nameSearchLabel);
 		topPanel.add(locationSearchLabel);
 		topPanel.add(whitespaceLabel);
@@ -129,7 +129,6 @@ public class ClientView extends JFrame {
 
 		tablePanel.setLayout(new BorderLayout());
 		tablePanel.setBorder(new EmptyBorder(new Insets(15, 10, 5, 10)));
-		// tablePanel.setPreferredSize(new Dimension(700, 475));
 		tablePanel.add(scrollPane);
 
 		final JToolBar vertical = new JToolBar(SwingConstants.VERTICAL);
@@ -151,16 +150,32 @@ public class ClientView extends JFrame {
 
 	public static void main(final String[] args) {
 		try{
-			final ClientView clientGUI = new ClientView();
+			final Mode mode = getMode(args);
+			final ClientView clientGUI = new ClientView(mode);
 			clientGUI.setVisible(true);
+		}catch(InvalidModeException ime){
+			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
+		}catch(ConnectException ce){
+			JOptionPane.showMessageDialog(null, "Exception encountered while attempting to connect to server\n\n" + ce);
 		}catch(Exception e){
-			JOptionPane.showMessageDialog(null, "Exception encountered : " + e);
-//			JOptionPane.showInputDialog("Exception encountered : " + e);
+			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
 		}
 
 	}
+	
+	private static Mode getMode(final String[] args) throws InvalidModeException {
+		if(args.length == 0){
+			throw new InvalidModeException();
+		}else if(args[0].equalsIgnoreCase("LOCAL")){
+			return Mode.LOCAL;
+		}else if(args[0].equalsIgnoreCase("REMOTE")){
+			return Mode.REMOTE;
+		}else{
+			throw new InvalidModeException(args[0]);
+		}
+	}
 
-	private JTable initTable() {
+	private JTable initTable(final TableModel tableModel) {
 		return new JTable(tableModel);
 	}
 
