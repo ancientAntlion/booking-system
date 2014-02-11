@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
@@ -24,10 +25,10 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableModel;
 
-import suncertify.server.exceptions.BookingServiceException;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
+import suncertify.ui.exceptions.InvalidModeException;
+import suncertify.ui.exceptions.RecordAlreadyBookedException;
 import suncertify.ui.exceptions.RecordNotBookedException;
-import suncertify.ui.exceptions.ServiceUnavailableException;
 
 public class ClientView extends JFrame {
 
@@ -59,28 +60,30 @@ public class ClientView extends JFrame {
 
 	/**
 	 * The constructor for the client GUI
-	 * 
-	 * @throws NotBoundException
-	 * @throws RemoteException
+	 * @throws NotBoundException 
+	 * @throws RemoteException 
 	 */
-	public ClientView(final Mode mode) throws ServiceUnavailableException {
+	public ClientView(final Mode mode) throws ServiceUnavailableException, RemoteException, NotBoundException {
 
 		// Set properties
 		setTitle("URLyBird");
 		setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
 		setBackground(Color.GRAY);
-
+		
 		// Initialize all components
 		mainPanel = new JPanel();
-		controller = new ClientController(mode);
 
+		controller = new ClientController(mode);
+		
 		topPanel = new JPanel();
 		bottomPanel = new JPanel();
 		tablePanel = new JPanel();
 		buttonPanel = new JPanel();
 		searchButtonPanel = new JPanel();
+		
 		nameSearchBar = new JTextField();
 		locationSearchBar = new JTextField();
+		
 		nameSearchLabel = new JLabel("Name");
 		locationSearchLabel = new JLabel("Location");
 		whitespaceLabel = new JLabel();
@@ -88,15 +91,18 @@ public class ClientView extends JFrame {
 		whitespaceLabel.setVisible(false);
 
 		try {
+
 			tableModel = controller.getAllEntries();
-		} catch (final ServiceUnavailableException gse) {
+		}catch (final ServiceUnavailableException gse) {
 			JOptionPane
 					.showMessageDialog(null, gse.getException().getMessage());
 			System.exit(0);
 		} catch (final BookingServiceException bse) {
 			JOptionPane.showMessageDialog(null, bse);
 		}
-		table = initTable();
+		table = initTable(tableModel);
+		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
+
 		scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -123,12 +129,9 @@ public class ClientView extends JFrame {
 		bottomPanel.setBorder(new EmptyBorder(new Insets(10, 150, 10, 150)));
 		bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
-		// sidePanel.setLayout(new BorderLayout());
-		// sidePanel.add(buttonPanel, BorderLayout.NORTH);
-
 		topPanel.setLayout(new GridLayout(2, 3, 10, 0));
 		topPanel.setBorder(new EmptyBorder(new Insets(5, 130, 5, 0)));
-		// topPanel.setPreferredSize(new Dimension(700, 100));
+
 		topPanel.add(nameSearchLabel);
 		topPanel.add(locationSearchLabel);
 		topPanel.add(whitespaceLabel);
@@ -138,7 +141,6 @@ public class ClientView extends JFrame {
 
 		tablePanel.setLayout(new BorderLayout());
 		tablePanel.setBorder(new EmptyBorder(new Insets(15, 10, 5, 10)));
-		// tablePanel.setPreferredSize(new Dimension(700, 475));
 		tablePanel.add(scrollPane);
 
 		final JToolBar vertical = new JToolBar(SwingConstants.VERTICAL);
@@ -159,25 +161,29 @@ public class ClientView extends JFrame {
 	}
 
 	public static void main(final String[] args) {
-		try {
-			final Mode mode = convertStringToMode(args[0]);
+		try{
+			final Mode mode = getMode(args);
+			final ClientView clientGUI = new ClientView(mode);
+			clientGUI.setVisible(true);
+		}catch(InvalidModeException ime){
+			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
+		}catch(ConnectException ce){
+			JOptionPane.showMessageDialog(null, "Exception encountered while attempting to connect to server\n\n" + ce);
+		}catch(Exception e){
+			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
+		}
 
-			if (mode == null) {
-				JOptionPane.showMessageDialog(null,
-						"Mode not selected from command line argument");
-			} else if (mode.equals(Mode.NOT_SPECIFIED)) {
-				JOptionPane.showMessageDialog(null,
-						"Valid Mode not selected from command line argument");
-			} else {
-				final ClientView clientGUI = new ClientView(mode);
-				clientGUI.setVisible(true);
-			}
-		} catch (final ServiceUnavailableException gse) {
-			JOptionPane.showMessageDialog(null, gse.getException());
-		} catch (final Exception e) {
-			JOptionPane.showMessageDialog(null,
-					"Could not connect to server due to unknown Exception : "
-							+ e);
+	}
+	
+	private static Mode getMode(final String[] args) throws InvalidModeException {
+		if(args.length == 0){
+			throw new InvalidModeException();
+		}else if(args[0].equalsIgnoreCase("LOCAL")){
+			return Mode.LOCAL;
+		}else if(args[0].equalsIgnoreCase("REMOTE")){
+			return Mode.REMOTE;
+		}else{
+			throw new InvalidModeException(args[0]);
 		}
 	}
 
@@ -186,24 +192,14 @@ public class ClientView extends JFrame {
 	}
 
 	private void updateTable(final String name, final String location) {
-
-		try {
-
-			if (name == null && location == null) {
-				tableModel = controller.getAllEntries();
-			} else {
-				tableModel = controller.getSpecificEntries(name, location);
-			}
-
-			table.setModel(tableModel);
-
-		} catch (final ServiceUnavailableException gse) {
-			JOptionPane.showMessageDialog(null, gse.getException());
-			System.exit(0);
-		} catch (final BookingServiceException bse) {
-			JOptionPane.showMessageDialog(null, bse);
+		
+		if (name == null && location == null) {
+			tableModel = controller.getAllEntries();
+		} else {
+			tableModel = controller.getSpecificEntries(name, location);
 		}
 
+		table.setModel(tableModel);
 	}
 
 	private JButton createBookButton() {
@@ -230,7 +226,7 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				handleUnbooking();
-
+				
 				System.out.println("Remove Booking Button Clicked");
 			}
 		});
@@ -282,7 +278,7 @@ public class ClientView extends JFrame {
 			}
 		}
 	}
-
+	
 	private void handleUnbooking() {
 		try {
 			// TODO using selected row is not good enough when results are
@@ -290,13 +286,13 @@ public class ClientView extends JFrame {
 			final int recNo = table.getSelectedRow();
 
 			controller.unreserveRoom(recNo);
-
+			
 			updateTable(nameSearchBar.getText(), locationSearchBar.getText());
 		} catch (final RecordNotBookedException e) {
 			JOptionPane.showMessageDialog(mainPanel,
 					"Record has not been booked!");
 		}
-
+		
 	}
 
 	private static Mode convertStringToMode(final String mode) {
