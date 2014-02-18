@@ -25,10 +25,12 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableModel;
 
+import suncertify.server.exceptions.BookingServiceException;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.InvalidModeException;
 import suncertify.ui.exceptions.RecordAlreadyBookedException;
 import suncertify.ui.exceptions.RecordNotBookedException;
+import suncertify.ui.exceptions.ServiceUnavailableException;
 
 public class ClientView extends JFrame {
 
@@ -62,8 +64,9 @@ public class ClientView extends JFrame {
 	 * The constructor for the client GUI
 	 * @throws NotBoundException 
 	 * @throws RemoteException 
+	 * @throws BookingServiceException 
 	 */
-	public ClientView(final Mode mode) throws ServiceUnavailableException, RemoteException, NotBoundException {
+	public ClientView(final Mode mode) throws ServiceUnavailableException, RemoteException, NotBoundException, BookingServiceException {
 
 		// Set properties
 		setTitle("URLyBird");
@@ -90,16 +93,8 @@ public class ClientView extends JFrame {
 
 		whitespaceLabel.setVisible(false);
 
-		try {
-
-			tableModel = controller.getAllEntries();
-		}catch (final ServiceUnavailableException gse) {
-			JOptionPane
-					.showMessageDialog(null, gse.getException().getMessage());
-			System.exit(0);
-		} catch (final BookingServiceException bse) {
-			JOptionPane.showMessageDialog(null, bse);
-		}
+		tableModel = controller.getAllEntries();
+		
 		table = initTable(tableModel);
 		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 
@@ -169,8 +164,15 @@ public class ClientView extends JFrame {
 			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
 		}catch(ConnectException ce){
 			JOptionPane.showMessageDialog(null, "Exception encountered while attempting to connect to server\n\n" + ce);
+		}catch (final ServiceUnavailableException sue) {
+			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			return;
+		}catch (final BookingServiceException bse) {
+			JOptionPane.showMessageDialog(null, bse);
+			return;
 		}catch(Exception e){
 			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
+			return;
 		}
 
 	}
@@ -187,18 +189,18 @@ public class ClientView extends JFrame {
 		}
 	}
 
-	private JTable initTable() {
+	private JTable initTable(final TableModel tableModel) {
 		return new JTable(tableModel);
 	}
 
-	private void updateTable(final String name, final String location) {
+	private void updateTable(final String name, final String location) throws ServiceUnavailableException, BookingServiceException {
 		
 		if (name == null && location == null) {
 			tableModel = controller.getAllEntries();
 		} else {
 			tableModel = controller.getSpecificEntries(name, location);
 		}
-
+		
 		table.setModel(tableModel);
 	}
 
@@ -241,9 +243,14 @@ public class ClientView extends JFrame {
 
 			@Override
 			public void actionPerformed(final ActionEvent e) {
-				System.out.println("Search Button Clicked");
-				updateTable(nameSearchBar.getText(),
-						locationSearchBar.getText());
+				try{
+					updateTable(nameSearchBar.getText(), locationSearchBar.getText());
+				}catch(final BookingServiceException bse){
+					
+				}catch(final ServiceUnavailableException sue){
+					JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+					System.exit(0);
+				}
 			}
 		});
 
@@ -275,6 +282,9 @@ public class ClientView extends JFrame {
 				JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
 			} catch (final BookingServiceException bse) {
 				JOptionPane.showMessageDialog(mainPanel, bse);
+			} catch (final ServiceUnavailableException sue) {
+				JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+				System.exit(0);
 			}
 		}
 	}
@@ -291,6 +301,12 @@ public class ClientView extends JFrame {
 		} catch (final RecordNotBookedException e) {
 			JOptionPane.showMessageDialog(mainPanel,
 					"Record has not been booked!");
+		} catch (BookingServiceException bse) {
+			JOptionPane.showMessageDialog(mainPanel,
+					"Record has not been booked!");
+		} catch (ServiceUnavailableException sue) {
+			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			System.exit(0);
 		}
 		
 	}
