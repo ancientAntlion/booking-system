@@ -6,7 +6,13 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+
+import suncertify.db.locking.LockingManager;
 
 public class Data implements DB {
 	
@@ -29,8 +35,13 @@ public class Data implements DB {
 
 	private final int numberOfFieldsInRecord = 7;
 	
+	private final Random random = new Random();
+	
+	private final LockingManager lockingManager;
+		
 	public Data(final String dbLocation){
 		this.dbLocation = dbLocation;
+		this.lockingManager = LockingManager.
 	}
 
 	public String[] read(final int recNo) throws RecordNotFoundException {
@@ -319,8 +330,25 @@ public class Data implements DB {
 
 	@Override
 	public long lock(int recNo) throws RecordNotFoundException {
-		// TODO Auto-generated method stub
-		return 0;
+		Long newLockCookie = random.nextLong();
+		
+		while(true){
+			Long alreadyLockedCookie = recordLockMap.get(recNo);
+			if(alreadyLockedCookie == null){
+				throw new RecordNotFoundException();
+			}else if(alreadyLockedCookie.equals(0L)){
+				recordLockMap.put(recNo, newLockCookie);
+				break;
+			}else{
+				try{
+					wait();
+				}catch(final InterruptedException ie){
+					
+				}
+			}
+		}
+		
+		return newLockCookie;
 	}
 
 	@Override
