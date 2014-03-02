@@ -2,7 +2,6 @@ package suncertify.db.locking;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class LockingManager {
 	
@@ -27,9 +26,20 @@ public class LockingManager {
 		return lockObject.lock();
 	}
 	
-	public void unlock(final int recNo, final long cookie){
+	public void unlock(final int recNo, final long lockCookie){
 		LockObject lockObject = getLockObject(recNo);
-		lockObject.unlock(cookie);
+		lockObject.unlock(lockCookie);
+	}
+	
+	public void verifyCookie(final int recNo, final long lockCookie) throws SecurityException {
+		LockObject lockObject = this.recordLockMap.get(recNo);
+		if(lockObject == null){
+			this.recordLockMap.put(recNo, new LockObject());
+		}else{
+			if(lockObject.getCookie() != lockCookie){
+				throw new SecurityException("Supplied cookie does not match record cookie");
+			}
+		}
 	}
 	
 	private LockObject getLockObject(final int recNo){

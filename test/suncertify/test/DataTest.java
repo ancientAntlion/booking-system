@@ -55,7 +55,7 @@ public class DataTest {
              * time, but if you want, you can increase the controller variable, 
              * so it is executed as many times as you want 
              */  
-            for (int i = 0; i < 5000; i++) {  
+            for (int i = 0; i < 1000; i++) {  
                 Thread updatingRandom = new UpdatingRandomRecordThread();  
                 updatingRandom.start();  
                 Thread updatingRecord1 = new UpdatingRecord1Thread();  
@@ -181,19 +181,12 @@ public class DataTest {
         public void run() {   
             try {  
                 System.out.println(Thread.currentThread().getId()  
-                        + " trying to create a record");  
+                        + " trying to create a record");
                 data.create(new String[] {"Elephant Inn", "Emerald City", "6", 
                  "N", "$120.00", "2005/02/03",""});  
             } catch (Exception e) {  
             	System.out.println("Exception during create operation");  
-                System.out.println(e);  
-                System.out.println(e.getMessage());
-                System.out.println(e.toString());
-                StackTraceElement[] ste = e.getStackTrace();
-                for(int i = 0; i< ste.length;i++){
-                	System.out.println(ste[i]);
-                }
-                
+                System.out.println(e);                  
             }  
         }  
     }  
@@ -217,12 +210,6 @@ public class DataTest {
             } catch (Exception e) {  
             	System.out.println("Exception during delete operation");  
                 System.out.println(e);  
-                System.out.println(e.getMessage());
-                System.out.println(e.toString());
-                StackTraceElement[] ste = e.getStackTrace();
-                for(int i = 0; i< ste.length;i++){
-                	System.out.println(ste[i]);
-                }
             }  
         }  
     }  

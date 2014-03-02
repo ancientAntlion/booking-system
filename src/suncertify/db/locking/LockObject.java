@@ -5,46 +5,49 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class LockObject {
 	
-	private long cookie;
+	private long lockCookie;
 		
-	private final ReentrantLock lock;
+	private final ReentrantLock lock = new ReentrantLock();
 	
-	private final Condition lockCondition;
+	private final Condition lockCondition = lock.newCondition();
 	
 	private boolean currentlyLocked;
 		
 	public LockObject(){
-		lock = new ReentrantLock();
-		lockCondition = lock.newCondition();
+		lockCookie = 0;
 		currentlyLocked = false;
 	}
 	
 	public long lock(){
 		lock.lock();
 		try{
-			if(currentlyLocked){
+			while(currentlyLocked){
 				lockCondition.awaitUninterruptibly();
 			}
 			currentlyLocked = true;
-			cookie = LockCookieGenerator.getLockCookie();
-			return cookie;
+			lockCookie = LockCookieGenerator.getLockCookie();
+			return lockCookie;
 		}finally{
 			lock.unlock();
 		}
 	}
 	
-	public void unlock(final long cookie){
+	public void unlock(final long lockCookie){
 		lock.lock();
 		try{
-			if(this.cookie != cookie){
-				throw new SecurityException();
+			if(this.lockCookie != lockCookie){
+				throw new SecurityException("Supplied cookie does not match record cookie");
 			}
 			currentlyLocked = false;
+			this.lockCookie = -1;
 			lockCondition.signal();
-			this.cookie = -1;
 		}finally{
 			lock.unlock();
 		}
+	}
+	
+	public Long getCookie(){
+		return lockCookie;
 	}
 
 }
