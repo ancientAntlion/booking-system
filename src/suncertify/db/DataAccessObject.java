@@ -8,6 +8,10 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import suncertify.db.exceptions.DuplicateKeyException;
+import suncertify.db.exceptions.RecordNotFoundException;
+import suncertify.db.exceptions.SecurityException;
+
 public class DataAccessObject {
 
 	private final String dbLocation;

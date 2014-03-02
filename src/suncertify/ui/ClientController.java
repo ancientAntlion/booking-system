@@ -1,13 +1,17 @@
 package suncertify.ui;
 
+import java.net.MalformedURLException;
+import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.table.TableModel;
 
+import suncertify.db.exceptions.DatabaseInitializationException;
 import suncertify.server.LocalBookingService;
 import suncertify.server.LocalBookingServiceImpl;
 import suncertify.server.RemoteBookingService;
@@ -17,6 +21,8 @@ import suncertify.ui.exceptions.RecordNotBookedException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
 public class ClientController {
+	
+	final static String SERVICE_NAME = "BookingService";
 
 	private final LocalBookingService localBookingService;
 
@@ -38,16 +44,21 @@ public class ClientController {
 				remoteBookingService = null;
 			} else {
 				localBookingService = null;
-				final String name = "BookingService";
-				final Registry registry = LocateRegistry.getRegistry(1099);
-				remoteBookingService = (RemoteBookingService) registry
-						.lookup(name);
+				
+				String serverAddress = JOptionPane.showInputDialog("Server Address", "localhost:" + Registry.REGISTRY_PORT);
+				
+				final String url = "rmi://" + serverAddress + "/" + SERVICE_NAME;
+				remoteBookingService = (RemoteBookingService) Naming.lookup(url);
 				System.out.println("Connected to BookingService");
 			}
 		} catch (final RemoteException re) {
 			throw new ServiceUnavailableException(re);
 		} catch (final NotBoundException nbe) {
 			throw new ServiceUnavailableException(nbe);
+		} catch (final MalformedURLException mue){
+			throw new ServiceUnavailableException(mue);
+		} catch (final DatabaseInitializationException die){
+			throw new ServiceUnavailableException(die);
 		}
 	}
 
@@ -61,7 +72,7 @@ public class ClientController {
 		} else {
 			try {
 				allEntries = remoteBookingService.findAll();
-				return new ClientTableModel(allEntries);
+				return new ClientTableModel(allEntries);//TODO Need to save the state of the table. Columns are reseting every call
 			} catch (final RemoteException re) {
 				throw new ServiceUnavailableException(re);
 			}

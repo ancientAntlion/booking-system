@@ -1,6 +1,7 @@
 package suncertify.db;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -12,6 +13,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import suncertify.db.exceptions.DatabaseInitializationException;
+import suncertify.db.exceptions.DuplicateKeyException;
+import suncertify.db.exceptions.RecordNotFoundException;
+import suncertify.db.exceptions.SecurityException;
 import suncertify.db.locking.LockingManager;
 
 public class Data implements DB {
@@ -19,7 +24,7 @@ public class Data implements DB {
 	private final String dbLocation;
 
 	private final String whitespaceString = "                                                                ";
-
+	
 	private final int singleRecordByteSize = 160;
 
 	private final int[] recordEntrySizes = { 64, 64, 4, 1, 8, 10, 8 };
@@ -39,9 +44,14 @@ public class Data implements DB {
 	
 	private final LockingManager lockingManager;
 		
-	public Data(final String dbLocation){
-		this.dbLocation = dbLocation;
-		this.lockingManager = LockingManager.getInstance();
+	public Data(final String dbLocation) throws DatabaseInitializationException{
+		File f = new File(dbLocation);
+		if(f.exists() && !f.isDirectory()){
+			this.dbLocation = dbLocation;
+			this.lockingManager = LockingManager.getInstance();
+		}else{
+			throw new DatabaseInitializationException("DB file '" + dbLocation + "' does not exist");
+		}
 	}
 
 	public String[] read(final int recNo) throws RecordNotFoundException {
@@ -250,12 +260,19 @@ public class Data implements DB {
 		String finalString = "";
 
 		for (int i = 0; i < data.length; i++) {
-			final String fieldString = data[i];
-			final int fieldSizeOffset = recordEntrySizes[i]
-					- fieldString.length();
-			final String paddedFieldString = fieldString
-					+ whitespaceString.substring(0, fieldSizeOffset);
-			finalString = finalString + paddedFieldString;
+			String fieldString = data[i];
+			System.out.println(fieldString + " and " + recordEntrySizes[i]);
+			if(fieldString.length() > recordEntrySizes[i]){
+				finalString = fieldString.substring(0, recordEntrySizes[i]);
+			}else if(fieldString.length() < recordEntrySizes[i]){
+				final int fieldSizeOffset = recordEntrySizes[i]
+						- fieldString.length();
+				final String paddedFieldString = fieldString
+						+ whitespaceString.substring(0, fieldSizeOffset);
+				finalString = finalString + paddedFieldString;
+			}else{
+				finalString = fieldString;
+			}
 		}
 
 		return finalString.getBytes();

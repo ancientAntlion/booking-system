@@ -1,6 +1,6 @@
-package suncertify.db;
+package suncertify.db.exceptions;
 
-public class DuplicateKeyException extends Throwable {
+public class DuplicateKeyException extends Exception {
 
 	/**
 	 * 
@@ -8,11 +8,11 @@ public class DuplicateKeyException extends Throwable {
 	private static final long serialVersionUID = -6689165809485807888L;
 
 	public DuplicateKeyException(){
-		
+		super();
 	}
 
 	public DuplicateKeyException(String description){
-		
+		super(description);
 	}
 	
 }

@@ -5,21 +5,22 @@ import java.util.List;
 
 import suncertify.db.DB;
 import suncertify.db.Data;
-import suncertify.db.RecordNotFoundException;
-import suncertify.db.SecurityException;
+import suncertify.db.exceptions.DatabaseInitializationException;
+import suncertify.db.exceptions.RecordNotFoundException;
+import suncertify.db.exceptions.SecurityException;
 import suncertify.server.exceptions.BookingServiceException;
 
 public class LocalBookingServiceImpl implements LocalBookingService {
 	
 	private DB database;
 	
-	public LocalBookingServiceImpl(final String dbFileName){
+	public LocalBookingServiceImpl(final String dbFileName) throws DatabaseInitializationException {
 		database = new Data(dbFileName);
 	}
 	
 	
 	public void book(final int recNo, final String customerID) throws BookingServiceException{
-		try {
+		try {//TODO determine if there needs to be no locking during local mode....only 1 thread so i think no need for locking??
 			final String[] record = database.read(recNo);
 			
 			if (record[6].trim().isEmpty()) {

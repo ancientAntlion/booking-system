@@ -6,49 +6,78 @@ import java.util.List;
 
 import suncertify.db.DB;
 import suncertify.db.Data;
-import suncertify.db.RecordNotFoundException;
-import suncertify.db.SecurityException;
+import suncertify.db.exceptions.DatabaseInitializationException;
+import suncertify.db.exceptions.RecordNotFoundException;
+import suncertify.db.exceptions.SecurityException;
 import suncertify.server.exceptions.BookingServiceException;
 
 public class RemoteBookingServiceImpl implements RemoteBookingService {
 	
 	private DB database;
 	
-	public RemoteBookingServiceImpl(final String dbFileName){
+	public RemoteBookingServiceImpl(final String dbFileName)  throws DatabaseInitializationException {
 		database = new Data(dbFileName);
 	}
 	
 
 	public void book(final int recNo, final String customerID) throws BookingServiceException, RemoteException{
+		Long cookie = 0L;
+		boolean successfullyLocked = false;
 		try {
+			cookie = database.lock(recNo);
+			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			
 			if (record[6].trim().isEmpty()) {
 				record[6] = customerID;
 				database.update(recNo, record, 1L);
 			} else {
-				//TODO throw something
+				throw new BookingServiceException("Could not book record number " + recNo + ", it is already booked.");
 			}
-		} catch (RecordNotFoundException e) {
-			//TODO throw something
-		} catch (SecurityException e) {
-			//TODO throw something
+		} catch (RecordNotFoundException rnfe) {
+			throw new BookingServiceException(rnfe.getMessage());
+		} catch (SecurityException se) {
+			throw new BookingServiceException(se.getMessage());
+		} finally {
+			if(successfullyLocked){
+				try {
+					database.unlock(recNo, cookie);
+				} catch (RecordNotFoundException rnfe) {
+					throw new BookingServiceException(rnfe.getMessage());
+				} catch (SecurityException se) {
+					throw new BookingServiceException(se.getMessage());
+				}
+			}
 		}
 	}
 	
 	public void unbook(final int recNo) throws BookingServiceException, RemoteException{
+		Long cookie = 0L;
+		boolean successfullyLocked = false;
 		try {
+			cookie = database.lock(recNo);
+			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			if (record[6].trim().isEmpty()) {
-				//TODO throw not booked execption
+				throw new BookingServiceException("Could not unbook record number " + recNo + ", it is not booked.");
 			} else {
 				record[6] = customerFieldWhiteSpace;
 				database.update(recNo, record, 1L);
 			}
-		} catch (final RecordNotFoundException e) {
-			// TODO HANDLE THIS
-		} catch (final SecurityException se) {
-			// TODO HANDLE THIS
+		} catch (RecordNotFoundException rnfe) {
+			throw new BookingServiceException(rnfe.getMessage());
+		} catch (SecurityException se) {
+			throw new BookingServiceException(se.getMessage());
+		} finally {
+			if(successfullyLocked){
+				try {
+					database.unlock(recNo, cookie);
+				} catch (RecordNotFoundException rnfe) {
+					throw new BookingServiceException(rnfe.getMessage());
+				} catch (SecurityException se) {
+					throw new BookingServiceException(se.getMessage());
+				}
+			}
 		}
 	}
 	

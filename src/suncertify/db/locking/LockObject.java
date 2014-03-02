@@ -40,6 +40,7 @@ public class LockObject {
 				throw new SecurityException();
 			}
 			currentlyLocked = false;
+			lockCondition.signal();
 			this.cookie = -1;
 		}finally{
 			lock.unlock();
