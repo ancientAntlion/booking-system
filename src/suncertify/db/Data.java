@@ -41,7 +41,7 @@ public class Data implements DB {
 		
 	public Data(final String dbLocation){
 		this.dbLocation = dbLocation;
-		this.lockingManager = LockingManager.
+		this.lockingManager = LockingManager.getInstance();
 	}
 
 	public String[] read(final int recNo) throws RecordNotFoundException {
@@ -330,32 +330,13 @@ public class Data implements DB {
 
 	@Override
 	public long lock(int recNo) throws RecordNotFoundException {
-		Long newLockCookie = random.nextLong();
-		
-		while(true){
-			Long alreadyLockedCookie = recordLockMap.get(recNo);
-			if(alreadyLockedCookie == null){
-				throw new RecordNotFoundException();
-			}else if(alreadyLockedCookie.equals(0L)){
-				recordLockMap.put(recNo, newLockCookie);
-				break;
-			}else{
-				try{
-					wait();
-				}catch(final InterruptedException ie){
-					
-				}
-			}
-		}
-		
-		return newLockCookie;
+		return lockingManager.lock(recNo);
 	}
 
 	@Override
 	public void unlock(int recNo, long cookie) throws RecordNotFoundException,
 			SecurityException {
-		// TODO Auto-generated method stub
-		
+		lockingManager.unlock(recNo, cookie);
 	}
 
 
