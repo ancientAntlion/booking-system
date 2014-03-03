@@ -52,21 +52,6 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 		}
 	}
 	
-	public List<String[]> findAll() throws BookingServiceException{
-
-		final List<String[]> recordList = new ArrayList<String[]>();
-		try {
-			for (int i = 0;; i++) {
-				final String[] singleEntry = database.read(i);
-				recordList.add(singleEntry);
-			}
-		} catch (final RecordNotFoundException rnfe) {
-			// End of file reached, all records read, carry on
-		}
-
-		return recordList;
-	}
-	
 	public List<String[]> find(final String name, final String location) throws BookingServiceException{
 		
 		final String[] criteria = constructCriteria(name, location);

@@ -2,10 +2,11 @@ package suncertify.db.locking;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import suncertify.db.exceptions.SecurityException;
 
 public class LockingManager {
 	
-	private final Map<Integer, LockObject> recordLockMap;
+	private static ConcurrentHashMap<Integer, LockObject> recordLockMap = new ConcurrentHashMap<Integer, LockObject>();
 	
 	private static LockingManager lockingManager;
 	
@@ -17,38 +18,28 @@ public class LockingManager {
 		return lockingManager;
 	}
 	
-	public LockingManager(){
-		this.recordLockMap = new ConcurrentHashMap<Integer, LockObject>();
-	}
-	
 	public long lock(final int recNo){
 		LockObject lockObject = getLockObject(recNo);
 		return lockObject.lock();
 	}
 	
-	public void unlock(final int recNo, final long lockCookie){
+	public void unlock(final int recNo, final long lockCookie) throws SecurityException{
 		LockObject lockObject = getLockObject(recNo);
 		lockObject.unlock(lockCookie);
 	}
 	
 	public void verifyCookie(final int recNo, final long lockCookie) throws SecurityException {
-		LockObject lockObject = this.recordLockMap.get(recNo);
-		if(lockObject == null){
-			this.recordLockMap.put(recNo, new LockObject());
-		}else{
-			if(lockObject.getCookie() != lockCookie){
-				throw new SecurityException("Supplied cookie does not match record cookie");
-			}
+		LockObject lockObject = new LockObject();
+		lockObject = LockingManager.recordLockMap.putIfAbsent(recNo, lockObject);
+		if (lockObject.getCookie() != lockCookie) {
+			throw new SecurityException("Supplied cookie (" + lockCookie + ") does not match record cookie (" + lockObject.getCookie() + ")");
 		}
 	}
 	
 	private LockObject getLockObject(final int recNo){
-		if(this.recordLockMap.get(recNo) == null){
-			LockObject lockObject = new LockObject();
-			this.recordLockMap.put(recNo, lockObject);
-		}
-		
-		return this.recordLockMap.get(recNo);
+		final LockObject lockObject = new LockObject();
+		LockingManager.recordLockMap.putIfAbsent(recNo, lockObject);
+		return LockingManager.recordLockMap.get(recNo);
 	}
 	
 }

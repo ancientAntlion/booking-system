@@ -246,7 +246,8 @@ public class ClientView extends JFrame {
 				try{
 					updateTable(nameSearchBar.getText(), locationSearchBar.getText());
 				}catch(final BookingServiceException bse){
-					
+					JOptionPane.showMessageDialog(null, bse.getMessage());
+					System.exit(0);
 				}catch(final ServiceUnavailableException sue){
 					JOptionPane.showMessageDialog(null, sue.getException().getMessage());
 					System.exit(0);
@@ -258,34 +259,29 @@ public class ClientView extends JFrame {
 	}
 
 	private void handleBooking() {
-		boolean inputAccepted = false;
 		String customerID;
 		int recNo;
-		while (!inputAccepted) {
-			try {
-				customerID = JOptionPane.showInputDialog(mainPanel,
-						"Enter Customer ID (8 Digits)");
-				if (customerID == null) {
-					break;
-				}
+		
+		try {
+			customerID = JOptionPane.showInputDialog(mainPanel,
+					"Enter Customer ID (8 Digits)");
+			if (customerID != null) {
 				// TODO using selected row is not good enough when results are
 				// filtered, fix this
 				recNo = table.getSelectedRow();
-
+	
 				controller.reserveRoom(recNo, customerID);
-
+	
 				updateTable(nameSearchBar.getText(),
 						locationSearchBar.getText());
-
-				inputAccepted = true;
-			} catch (final InvalidCustomerIDException icide) {
-				JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
-			} catch (final BookingServiceException bse) {
-				JOptionPane.showMessageDialog(mainPanel, bse);
-			} catch (final ServiceUnavailableException sue) {
-				JOptionPane.showMessageDialog(null, sue.getException().getMessage());
-				System.exit(0);
 			}
+		} catch (final InvalidCustomerIDException icide) {
+			JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
+		} catch (final BookingServiceException bse) {
+			JOptionPane.showMessageDialog(mainPanel, bse);
+		} catch (final ServiceUnavailableException sue) {
+			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			System.exit(0);
 		}
 	}
 	

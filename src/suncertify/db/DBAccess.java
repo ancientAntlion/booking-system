@@ -30,80 +30,96 @@ public class DBAccess {
 
 	private final int numberOfFieldsInRecord = 7;
 	
-	private final RandomAccessFile databaseFile;
+	private static RandomAccessFile databaseFile;
 		
 	public DBAccess(final String dbLocation) throws DatabaseInitializationException {
 		try {
-			databaseFile = new RandomAccessFile(dbLocation, "rw");
+			DBAccess.databaseFile = new RandomAccessFile(dbLocation, "rw");
 		} catch (Exception e) {
 			throw new DatabaseInitializationException("Exception encountered while initializing the database : " + e.getMessage());
 		}
 	}
 	
-	public String[] getRecord(final int recNo) throws RecordNotFoundException {
+	public String[] getRecord(final int recNo) throws RecordNotFoundException, EOFException {
 
 		try {
 			final int requestedRecordIndex = firstRecordIndex + recNo
 					* singleRecordByteSize;
 			final byte[] fullRecordByteArray = new byte[singleRecordByteSize];
+			
+			synchronized(DBAccess.databaseFile){
 
-			databaseFile.seek(requestedRecordIndex);
-
-			final long isValidRecord = databaseFile.readByte();
-			if (isValidRecord != 0) {
-				throw new RecordNotFoundException("Record " + recNo + " not found");
+				DBAccess.databaseFile.seek(requestedRecordIndex);
+	
+				final long isValidRecord = DBAccess.databaseFile.readByte();
+				if (isValidRecord != 0) {
+					throw new RecordNotFoundException("Record " + recNo + " not found");
+				}
+	
+				DBAccess.databaseFile.read(fullRecordByteArray);
+			
 			}
-
-			databaseFile.read(fullRecordByteArray);
 
 			final String[] resultArray = constructReadableStringArray(fullRecordByteArray);
 			
 			return resultArray;
 
+		} catch (final EOFException eofe) {
+			throw eofe;
 		} catch (final Exception e) {
 			throw new RecordNotFoundException("Record " + recNo + " not found");
 		}
 
 	}
 
-	public void update(final int recNo, final String[] data,
-			final long lockCookie) throws RecordNotFoundException,
-			SecurityException {
+	public void update(final int recNo, final String[] data) throws RecordNotFoundException{
 
 		try {
 			final int requestedRecordIndex = firstRecordNameIndex + recNo
 					* singleRecordByteSize;
 
 			final byte[] writableBytes = constructWritableByteArray(data);
-
-			final long isValidRecord = databaseFile.readByte();
-			if (isValidRecord != 0) {
-				throw new RecordNotFoundException("Record " + recNo + " not found");
-			}
-
-			databaseFile.seek(requestedRecordIndex);
-			databaseFile.write(writableBytes);
 			
+			synchronized(DBAccess.databaseFile){
+
+				DBAccess.databaseFile.seek(requestedRecordIndex-1);
+				
+				final long isValidRecord = DBAccess.databaseFile.readByte();
+				if (isValidRecord != 0) {
+					throw new RecordNotFoundException("Record " + recNo + " not found");
+				}
+	
+				DBAccess.databaseFile.seek(requestedRecordIndex);
+				DBAccess.databaseFile.write(writableBytes);
+				
+			}
+			
+		} catch (final RecordNotFoundException rnfe) {
+			throw rnfe;
 		} catch (final Exception e) {
 			throw new RecordNotFoundException("Record " + recNo + " not found. " + e.getMessage());
 		} 
 
 	}
 
-	public void delete(final int recNo, final long lockCookie)
+	public void delete(final int recNo)
 			throws RecordNotFoundException, SecurityException {
 		try {
 			final int requestedRecordIndex = firstRecordIndex + recNo
 					* singleRecordByteSize;
+			
+			synchronized(DBAccess.databaseFile){
 
-			databaseFile.seek(requestedRecordIndex);
-
-			final long isValidRecord = databaseFile.readByte();
-			if (isValidRecord != 0) {
-				throw new RecordNotFoundException("Record " + recNo + " not found.");
-			} else {
-				databaseFile.seek(requestedRecordIndex);
-				databaseFile.writeByte(1);
+				DBAccess.databaseFile.seek(requestedRecordIndex);
+	
+				final long isValidRecord = DBAccess.databaseFile.readByte();
+				if (isValidRecord != 0) {
+					throw new RecordNotFoundException("Record " + recNo + " not found.");
+				} else {
+					DBAccess.databaseFile.seek(requestedRecordIndex);
+					DBAccess.databaseFile.writeByte(1);
+				}
+			
 			}
 		} catch (final Exception e) {
 			throw new RecordNotFoundException("Record " + recNo + " not found. " + e.getMessage());
@@ -112,30 +128,35 @@ public class DBAccess {
 	
 	public int[] find(String[] criteria) {
 		final List<Integer> resultList = new ArrayList<Integer>();
-		try{
 			for(int i = 0;;i++){
 				boolean isMatch = true;
 				
-				final String[] entry = getRecord(i);
-				
-				for (int j = 0; j<criteria.length; j++){
+				try{
+					final String[] entry = getRecord(i);
 					
-					if(criteria[j] != null){
-						if(!entry[j].startsWith(criteria[j])){
-							isMatch = false;
-							continue;
+					for (int j = 0; j<criteria.length; j++){
+						
+						if(criteria[j] != null){
+							if(!entry[j].startsWith(criteria[j])){
+								isMatch = false;
+								continue;
+							}
 						}
 					}
-				}
-				
-				if(isMatch){
-					resultList.add(i);
+					
+					if(isMatch){
+						resultList.add(i);
+					}
+				}catch(RecordNotFoundException rnfe){
+					//We can ignore this and continue.
+					//We only want to break the loop when we reach the end of the DB file
+				}catch(EOFException eofe){
+					//Finished reading from file now, results are all stored in resultList
+					break;
 				}
 				
 			}
-		}catch(RecordNotFoundException rnfe){
-			
-		}
+		
 		
 		final int[] results = new int[resultList.size()];
 		for(int i = 0; i<resultList.size(); i++){
@@ -148,15 +169,18 @@ public class DBAccess {
 
 	public int create(final String[] data) throws DuplicateKeyException {
 		try {
-			final long writeIndex = getFirstWritableIndex();
-
-			final byte[] writeableBytes = constructWritableByteArray(data);
-
-			databaseFile.seek(writeIndex);
-			databaseFile.writeByte(0);
-			databaseFile.write(writeableBytes);
 			
-			return (int) ((writeIndex - firstRecordIndex)/160);
+			final byte[] writeableBytes = constructWritableByteArray(data);
+						
+			synchronized(DBAccess.databaseFile){
+				final long writeIndex = getFirstWritableIndex();
+
+				DBAccess.databaseFile.seek(writeIndex);
+				DBAccess.databaseFile.writeByte(0);
+				DBAccess.databaseFile.write(writeableBytes);
+			
+				return (int) ((writeIndex - firstRecordIndex)/160);
+			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		} 
@@ -199,21 +223,21 @@ public class DBAccess {
 
 	private long getFirstWritableIndex() throws IOException {
 		try {
-			for (int i = firstRecordIndex; i < databaseFile.length(); i = i
+			for (int i = firstRecordIndex; i < DBAccess.databaseFile.length(); i = i
 					+ singleRecordByteSize) {
-				databaseFile.seek(i);
-				final long isValidRecord = databaseFile.readByte();
+				DBAccess.databaseFile.seek(i);
+				final long isValidRecord = DBAccess.databaseFile.readByte();
 				if (isValidRecord != 0) {
-					final long writeLocation = databaseFile.getFilePointer() - 1;
+					final long writeLocation = DBAccess.databaseFile.getFilePointer() - 1;
 					return writeLocation;
 				}
 			}
 		} catch (final EOFException eofe) {
-			final long writeLocation = databaseFile.getFilePointer() - 1;
+			final long writeLocation = DBAccess.databaseFile.getFilePointer() - 1;
 			return writeLocation;
 		}
 
-		final long writeLocation = databaseFile.getFilePointer() -1 + singleRecordByteSize;
+		final long writeLocation = DBAccess.databaseFile.getFilePointer() -1 + singleRecordByteSize;
 		return writeLocation;
 	}
 	

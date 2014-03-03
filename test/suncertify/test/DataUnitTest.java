@@ -20,7 +20,7 @@ import suncertify.db.exceptions.SecurityException;
  * @author Roberto Perillo 
  * @version 1.0 05/11/2008 
  */  
-public class DataTest {  
+public class DataUnitTest {  
     
     private static final String DB_PATH = "C:\\Users\\Aaron\\booking-system\\src\\suncertify\\db\\db-1x3.db";
   
@@ -41,12 +41,12 @@ public class DataTest {
         try {
             data = new Data(DB_PATH);
         } catch (DatabaseInitializationException ex) {
-            Logger.getLogger(DataTest.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(DataUnitTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         System.out.println("STARTING NOW");
         
-        new DataTest().startTests();  
+        new DataUnitTest().startTests();  
     }  
   
     public void startTests() {  
@@ -58,6 +58,17 @@ public class DataTest {
              * so it is executed as many times as you want 
              */  
             for (int i = 0; i < 100; i++) {  
+//            	UpdatingRandomRecordThread updatingRandom = new UpdatingRandomRecordThread();  
+//                updatingRandom.start();
+                
+                
+//            	CreatingRecordThread creatingRecord = new CreatingRecordThread();  
+//            	creatingRecord.m1();
+//                
+//            	DeletingRecord1Thread deletingRecord = new DeletingRecord1Thread();  
+//                deletingRecord.m1();  
+                
+                
                 Thread updatingRandom = new UpdatingRandomRecordThread();  
                 updatingRandom.start();  
                 Thread updatingRecord1 = new UpdatingRecord1Thread();  
@@ -76,7 +87,66 @@ public class DataTest {
   
     }  
   
-    private class UpdatingRandomRecordThread extends Thread {  
+    private class UpdatingRandomRecordThread extends Thread { 
+    	
+    	@SuppressWarnings("deprecation")  
+        public void m1() {  
+            final String[] room = {"Palace1234", "Smallville", "2", "Y", "$150.00", "2005/05/06", ""};  
+  
+            final int recNo = (int) (Math.random() * 50);  
+            boolean lockedSuccessfully = false;
+            Long cookie = 0L;
+            try {  
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to lock record #" + recNo  
+                        + " on UpdatingRandomRecordThread");  
+  
+                /* 
+                 * The generated record number may not exist in the database, so 
+                 * a RecordNotFoundException must be thrown by the lock method. 
+                 * Since the database records are in a cache, it is not 
+                 * necessary to put the unlock instruction in a finally block, 
+                 * because an exception can only occur when calling the lock 
+                 * method (not when calling the update/delete methods), 
+                 * therefore it is not necessary to call the unlock method in a 
+                 * finally block, but you can customize this code according to 
+                 * your reality 
+                 */  
+                cookie = data.lock(recNo);
+                lockedSuccessfully = true;
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to update record #" + recNo  
+                        + " on UpdatingRandomRecordThread");  
+  
+                /* 
+                 * An exception cannot occur here, otherwise, the unlock 
+                 * instruction will not be reached, and the record will be 
+                 * locked forever. In this case, I created a class called 
+                 * RoomRetriever, which transforms from Room to String array, 
+                 * and vice-versa, but it could also be done this way: 
+                 */ 
+                 data.update(recNo, room, cookie); 
+                   
+                //data.update(recNo, room.toStringArray());  
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to unlock record #" + recNo  
+                        + " on UpdatingRandomRecordThread");  
+					
+				
+            } catch (Exception e) {  
+            	System.out.println("Exception during run operation");  
+                System.out.println(e);  
+            } finally{
+            	if(lockedSuccessfully){
+            		try {
+						data.unlock(recNo, cookie);
+					} catch (Exception e) {
+						System.out.println("Exception during run operation");  
+		                System.out.println(e);  
+					}
+            	}
+            }
+        }  
   
         @SuppressWarnings("deprecation")  
         public void run() {  
@@ -124,7 +194,6 @@ public class DataTest {
 				
             } catch (Exception e) {  
             	System.out.println("Exception during run operation");  
-            	e.printStackTrace();
                 System.out.println(e);  
             } finally{
             	if(lockedSuccessfully){
@@ -132,7 +201,6 @@ public class DataTest {
 						data.unlock(recNo, cookie);
 					} catch (Exception e) {
 						System.out.println("Exception during run operation");  
-						e.printStackTrace();
 		                System.out.println(e);  
 					}
             	}
@@ -170,7 +238,6 @@ public class DataTest {
                  */  
             } catch (Exception e) {  
             	System.out.println("Exception during update operation");  
-            	e.printStackTrace();
                 System.out.println(e);  
             } finally{
             	if(lockedSuccessfully){
@@ -178,7 +245,6 @@ public class DataTest {
 						data.unlock(1, cookie);
 					} catch (Exception e) {
 						System.out.println("Exception during update1 operation");  
-						e.printStackTrace();
 		                System.out.println(e);  
 					}
             	}
@@ -193,8 +259,22 @@ public class DataTest {
             try {  
                 System.out.println(Thread.currentThread().getId()  
                         + " trying to create a record");
-                data.create(new String[] {"Elephant Inn", "Emerald City", "6", 
+                data.create(new String[] {"Elephant Inn1234", "Emerald City", "6", 
                  "N", "$120.00", "2005/02/03",""});  
+            } catch (Exception e) {  
+            	System.out.println("Exception during create operation");  
+                System.out.println(e);                  
+            }  
+        }  
+        
+        
+        @SuppressWarnings("deprecation")  
+        public void m1() {   
+            try {  
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to create a record");
+                data.create(new String[] {"Elephant Inn1234", "Emerald City", "6", 
+                 "N", "$120.00", "2005/02/03","11111111"});  
             } catch (Exception e) {  
             	System.out.println("Exception during create operation");  
                 System.out.println(e);                  
@@ -234,6 +314,41 @@ public class DataTest {
             	}
             }
         }  
+        
+        public void m1() {  
+        	boolean lockedSuccessfully = false;
+        	Long cookie = 0L;
+        	
+        	final int recNo = (int) (Math.random() * 50);  
+            try {  
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to lock record #1 on "  
+                        + "DeletingRecord1Thread");  
+                cookie = data.lock(recNo);  
+                lockedSuccessfully = true;
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to delete record #1 on "  
+                        + "DeletingRecord1Thread");  
+                data.delete(recNo, cookie);  
+                System.out.println(Thread.currentThread().getId()  
+                        + " trying to unlock record #1 on "  
+                        + "DeletingRecord1Thread");  
+            } catch (Exception e) {  
+            	System.out.println("Exception during delete1 operation");  
+                System.out.println(e);  
+            }  finally{
+            	if(lockedSuccessfully){
+            		try {
+						data.unlock(recNo, cookie);
+					} catch (Exception e) {
+						System.out.println("Exception during delete1 operation");  
+		                System.out.println(e);  
+					}
+            	}
+            }
+        }  
+        
+        
     }  
   
     private class FindingRecordsThread extends Thread {  

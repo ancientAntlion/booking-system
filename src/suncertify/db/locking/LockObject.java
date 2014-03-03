@@ -2,6 +2,7 @@ package suncertify.db.locking;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import suncertify.db.exceptions.SecurityException;
 
 public class LockObject {
 	
@@ -14,7 +15,7 @@ public class LockObject {
 	private boolean currentlyLocked;
 		
 	public LockObject(){
-		lockCookie = 0;
+		lockCookie = -1L;
 		currentlyLocked = false;
 	}
 	
@@ -26,17 +27,18 @@ public class LockObject {
 			}
 			currentlyLocked = true;
 			lockCookie = LockCookieGenerator.getLockCookie();
+			System.out.println(Thread.currentThread().getId() + " - new lock cookie - " + lockCookie);
 			return lockCookie;
 		}finally{
 			lock.unlock();
 		}
 	}
 	
-	public void unlock(final long lockCookie){
+	public void unlock(final long lockCookie) throws SecurityException{
 		lock.lock();
 		try{
 			if(this.lockCookie != lockCookie){
-				throw new SecurityException("Supplied cookie does not match record cookie");
+				throw new SecurityException("Supplied cookie (" + lockCookie + ") does not match record cookie (" + this.lockCookie + ")");
 			}
 			currentlyLocked = false;
 			this.lockCookie = -1;

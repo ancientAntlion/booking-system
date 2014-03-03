@@ -21,16 +21,16 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	
 
 	public void book(final int recNo, final String customerID) throws BookingServiceException, RemoteException{
-		Long cookie = 0L;
+		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
 		try {
-			cookie = database.lock(recNo);
+			lockCookie = database.lock(recNo);
 			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			
 			if (record[6].trim().isEmpty()) {
 				record[6] = customerID;
-				database.update(recNo, record, 1L);
+				database.update(recNo, record, lockCookie);
 			} else {
 				throw new BookingServiceException("Could not book record number " + recNo + ", it is already booked.");
 			}
@@ -41,7 +41,7 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		} finally {
 			if(successfullyLocked){
 				try {
-					database.unlock(recNo, cookie);
+					database.unlock(recNo, lockCookie);
 				} catch (RecordNotFoundException rnfe) {
 					throw new BookingServiceException(rnfe.getMessage());
 				} catch (SecurityException se) {
@@ -52,17 +52,17 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	}
 	
 	public void unbook(final int recNo) throws BookingServiceException, RemoteException{
-		Long cookie = 0L;
+		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
 		try {
-			cookie = database.lock(recNo);
+			lockCookie = database.lock(recNo);
 			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			if (record[6].trim().isEmpty()) {
 				throw new BookingServiceException("Could not unbook record number " + recNo + ", it is not booked.");
 			} else {
 				record[6] = customerFieldWhiteSpace;
-				database.update(recNo, record, 1L);
+				database.update(recNo, record, lockCookie);
 			}
 		} catch (RecordNotFoundException rnfe) {
 			throw new BookingServiceException(rnfe.getMessage());
@@ -71,7 +71,7 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		} finally {
 			if(successfullyLocked){
 				try {
-					database.unlock(recNo, cookie);
+					database.unlock(recNo, lockCookie);
 				} catch (RecordNotFoundException rnfe) {
 					throw new BookingServiceException(rnfe.getMessage());
 				} catch (SecurityException se) {
@@ -79,21 +79,6 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 				}
 			}
 		}
-	}
-	
-	public List<String[]> findAll() throws BookingServiceException, RemoteException{
-
-		final List<String[]> recordList = new ArrayList<String[]>();
-		try {
-			for (int i = 0;; i++) {
-				final String[] singleEntry = database.read(i);
-				recordList.add(singleEntry);
-			}
-		} catch (final RecordNotFoundException rnfe) {
-			// End of file reached, all records read, carry on
-		}
-
-		return recordList;
 	}
 	
 	public List<String[]> find(final String name, final String location) throws BookingServiceException, RemoteException{

@@ -67,11 +67,11 @@ public class ClientController {
 
 		final List<String[]> allEntries;
 		if (mode.equals(Mode.LOCAL)) {
-			allEntries = localBookingService.findAll();
+			allEntries = localBookingService.find(null, null);
 			return new ClientTableModel(allEntries);
 		} else {
 			try {
-				allEntries = remoteBookingService.findAll();
+				allEntries = remoteBookingService.find(null, null);
 				return new ClientTableModel(allEntries);//TODO Need to save the state of the table. Columns are reseting every call
 			} catch (final RemoteException re) {
 				throw new ServiceUnavailableException(re);
