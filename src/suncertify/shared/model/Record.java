@@ -1,9 +1,8 @@
-package suncertify.ui.records;
-
-import java.util.Date;
+package suncertify.shared.model;
 
 public class Record {
 	
+	private int recordNumber;
 	private String hotelName;
 	private String hotelLocation;
 	private String roomSize;
@@ -14,14 +13,15 @@ public class Record {
 	
 	public Record(final String hotelName, final String hotelLocation,
 			final String roomSize, final String smokingRoom, final String roomRate, final String arrivalDate,
-			final String customerID){
+			final String customerID, final int recordNumber){
 		this.setHotelName(hotelName);
 		this.setHotelLocation(hotelLocation);
 		this.setRoomSize(roomSize);
 		this.setSmokingRoom(smokingRoom);
 		this.setRoomRate(roomRate);
 		this.setArrivalDate(arrivalDate);
-		this.setCustomerID(customerID);		
+		this.setCustomerID(customerID);
+		this.setRecordNumber(recordNumber);
 	}
 
 	public String getHotelName() {
@@ -78,6 +78,14 @@ public class Record {
 
 	public void setCustomerID(String customerID) {
 		this.customerID = customerID;
+	}	
+	
+	public int getRecordNumber() {
+		return recordNumber;
+	}
+
+	public void setRecordNumber(int recordNumber) {
+		this.recordNumber = recordNumber;
 	}	
 	
 }

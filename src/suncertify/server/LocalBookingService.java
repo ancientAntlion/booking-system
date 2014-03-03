@@ -3,6 +3,7 @@ package suncertify.server;
 import java.util.List;
 
 import suncertify.server.exceptions.BookingServiceException;
+import suncertify.shared.model.Record;
 
 public interface LocalBookingService extends BookingService {
 
@@ -10,6 +11,6 @@ public interface LocalBookingService extends BookingService {
 	
 	public void unbook(final int recNo) throws BookingServiceException;
 		
-	public List<String[]> find(final String name, final String location) throws BookingServiceException;
+	public List<Record> find(final String name, final String location) throws BookingServiceException;
 	
 }

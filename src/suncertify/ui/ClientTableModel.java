@@ -4,15 +4,15 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import suncertify.ui.records.Record;
+import suncertify.shared.model.Record;
 
 public class ClientTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1111923761540802741L;
 	private static final String[] columnNames = { "Name", "Location", "Size", "Smoking", "Rate", "Date", "Owner" };
-    protected List<String[]> recordList;
+    protected List<Record> recordList;
 
-    public ClientTableModel(List<String[]> recordList)
+    public ClientTableModel(List<Record> recordList)
     {
         this.recordList = recordList;
         fireTableDataChanged();
@@ -37,7 +37,7 @@ public class ClientTableModel extends AbstractTableModel {
         	return null;
         }        
         
-        String[] record = recordList.get(row);
+        Record record = recordList.get(row);
         
         return record[column];
     }

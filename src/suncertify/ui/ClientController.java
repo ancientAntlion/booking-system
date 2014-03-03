@@ -65,7 +65,7 @@ public class ClientController {
 	public TableModel getAllEntries() throws ServiceUnavailableException,
 			BookingServiceException {
 
-		final List<String[]> allEntries;
+		final List<Record> allEntries;
 		if (mode.equals(Mode.LOCAL)) {
 			allEntries = localBookingService.find(null, null);
 			return new ClientTableModel(allEntries);
