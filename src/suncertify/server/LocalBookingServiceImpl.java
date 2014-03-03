@@ -22,35 +22,63 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 	
 	
 	public void book(final int recNo, final String customerID) throws BookingServiceException{
-		try {//TODO determine if there needs to be no locking during local mode....only 1 thread so i think no need for locking??
+		Long lockCookie = 0L;
+		boolean successfullyLocked = false;
+		try {
+			lockCookie = database.lock(recNo);
+			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			
 			if (record[6].trim().isEmpty()) {
 				record[6] = customerID;
-				database.update(recNo, record, 1L);
+				database.update(recNo, record, lockCookie);
 			} else {
-				//TODO throw something
+				throw new BookingServiceException("Could not book record number " + recNo + ", it is already booked.");
 			}
-		} catch (RecordNotFoundException e) {
-			//TODO throw something
-		} catch (SecurityException e) {
-			//TODO throw something
+		} catch (RecordNotFoundException rnfe) {
+			throw new BookingServiceException(rnfe.getMessage());
+		} catch (SecurityException se) {
+			throw new BookingServiceException(se.getMessage());
+		} finally {
+			if(successfullyLocked){
+				try {
+					database.unlock(recNo, lockCookie);
+				} catch (RecordNotFoundException rnfe) {
+					throw new BookingServiceException(rnfe.getMessage());
+				} catch (SecurityException se) {
+					throw new BookingServiceException(se.getMessage());
+				}
+			}
 		}
 	}
 	
 	public void unbook(final int recNo) throws BookingServiceException{
+		Long lockCookie = 0L;
+		boolean successfullyLocked = false;
 		try {
+			lockCookie = database.lock(recNo);
+			successfullyLocked = true;
 			final String[] record = database.read(recNo);
 			if (record[6].trim().isEmpty()) {
-				//TODO throw not booked execption
+				throw new BookingServiceException("Could not unbook record number " + recNo + ", it is not booked.");
 			} else {
 				record[6] = customerFieldWhiteSpace;
-				database.update(recNo, record, 1L);
+				database.update(recNo, record, lockCookie);
 			}
-		} catch (final RecordNotFoundException e) {
-			// TODO HANDLE THIS
-		} catch (final SecurityException se) {
-			// TODO HANDLE THIS
+		} catch (RecordNotFoundException rnfe) {
+			throw new BookingServiceException(rnfe.getMessage());
+		} catch (SecurityException se) {
+			throw new BookingServiceException(se.getMessage());
+		} finally {
+			if(successfullyLocked){
+				try {
+					database.unlock(recNo, lockCookie);
+				} catch (RecordNotFoundException rnfe) {
+					throw new BookingServiceException(rnfe.getMessage());
+				} catch (SecurityException se) {
+					throw new BookingServiceException(se.getMessage());
+				}
+			}
 		}
 	}
 	
@@ -83,11 +111,13 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 	}
 	
 	private Record constructRecordObject(final String[] dbRecord, final int recordNumber) {
-		Record record = new Record(dbRecord[0], dbRecord[1], dbRecord[2], dbRecord[3], dbRecord[4], dbRecord[5], dbRecord[6], recordNumber);
+		Record record = new Record(dbRecord, recordNumber);
 
 		return record;
 	}
 	
 }
+
+
 
 

@@ -111,8 +111,8 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	}
 	
 	private Record constructRecordObject(final String[] dbRecord, final int recordNumber) {
-		Record record = new Record(dbRecord[0], dbRecord[1], dbRecord[2], dbRecord[3], dbRecord[4], dbRecord[5], dbRecord[6], recordNumber);
-
+		Record record = new Record(dbRecord, recordNumber);
+		
 		return record;
 	}
 	

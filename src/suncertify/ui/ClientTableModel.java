@@ -17,6 +17,10 @@ public class ClientTableModel extends AbstractTableModel {
         this.recordList = recordList;
         fireTableDataChanged();
     }
+    
+    public Record getRecord(final int recordNumber){
+    	return recordList.get(recordNumber);
+    }
 
     @Override
     public String getColumnName(int columnIndex)
@@ -38,8 +42,8 @@ public class ClientTableModel extends AbstractTableModel {
         }        
         
         Record record = recordList.get(row);
-        
-        return record[column];
+                
+        return record.getRecordData()[column];
     }
 
     @Override

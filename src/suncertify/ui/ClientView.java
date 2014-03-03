@@ -268,7 +268,9 @@ public class ClientView extends JFrame {
 			if (customerID != null) {
 				// TODO using selected row is not good enough when results are
 				// filtered, fix this
+				System.out.println("getting selected row");
 				recNo = table.getSelectedRow();
+				System.out.println("selected row gotten " + recNo);
 	
 				controller.reserveRoom(recNo, customerID);
 	

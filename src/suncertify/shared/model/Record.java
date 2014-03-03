@@ -1,84 +1,24 @@
 package suncertify.shared.model;
 
-public class Record {
+import java.io.Serializable;
+
+public class Record implements Serializable {
 	
 	private int recordNumber;
-	private String hotelName;
-	private String hotelLocation;
-	private String roomSize;
-	private String isSmokingRoom;
-	private String roomRate;
-	private String arrivalDate;
-	private String customerID;
+	private String[] recordData;
 	
-	public Record(final String hotelName, final String hotelLocation,
-			final String roomSize, final String smokingRoom, final String roomRate, final String arrivalDate,
-			final String customerID, final int recordNumber){
-		this.setHotelName(hotelName);
-		this.setHotelLocation(hotelLocation);
-		this.setRoomSize(roomSize);
-		this.setSmokingRoom(smokingRoom);
-		this.setRoomRate(roomRate);
-		this.setArrivalDate(arrivalDate);
-		this.setCustomerID(customerID);
+	public Record(final String[] recordData,final int recordNumber){
+		this.setRecordData(recordData);
 		this.setRecordNumber(recordNumber);
 	}
 
-	public String getHotelName() {
-		return hotelName;
+	public String[] getRecordData() {
+		return recordData;
 	}
-
-	public void setHotelName(String hotelName) {
-		this.hotelName = hotelName;
+	
+	public void setRecordData(final String[] recordData) {
+		this.recordData = recordData;
 	}
-
-	public String getHotelLocation() {
-		return hotelLocation;
-	}
-
-	public void setHotelLocation(String hotelLocation) {
-		this.hotelLocation = hotelLocation;
-	}
-
-	public String getRoomSize() {
-		return roomSize;
-	}
-
-	public void setRoomSize(String roomSize) {
-		this.roomSize = roomSize;
-	}
-
-	public String isSmokingRoom() {
-		return isSmokingRoom;
-	}
-
-	public void setSmokingRoom(String smokingRoom) {
-		this.isSmokingRoom = smokingRoom;
-	}
-
-	public String getRoomRate() {
-		return roomRate;
-	}
-
-	public void setRoomRate(String roomRate) {
-		this.roomRate = roomRate;
-	}
-
-	public String getArrivalDate() {
-		return arrivalDate;
-	}
-
-	public void setArrivalDate(String arrivalDate) {
-		this.arrivalDate = arrivalDate;
-	}
-
-	public String getCustomerID() {
-		return customerID;
-	}
-
-	public void setCustomerID(String customerID) {
-		this.customerID = customerID;
-	}	
 	
 	public int getRecordNumber() {
 		return recordNumber;

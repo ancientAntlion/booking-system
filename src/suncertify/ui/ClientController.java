@@ -16,6 +16,7 @@ import suncertify.server.LocalBookingService;
 import suncertify.server.LocalBookingServiceImpl;
 import suncertify.server.RemoteBookingService;
 import suncertify.server.exceptions.BookingServiceException;
+import suncertify.shared.model.Record;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.RecordNotBookedException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
@@ -29,6 +30,8 @@ public class ClientController {
 	private final RemoteBookingService remoteBookingService;
 
 	private final Mode mode;
+	
+	private ClientTableModel tableModel;
 
 	String[] columnNames = { "Name", "Location", "Size", "Smoking", "Rate",
 			"Date", "Owner" };
@@ -68,28 +71,50 @@ public class ClientController {
 		final List<Record> allEntries;
 		if (mode.equals(Mode.LOCAL)) {
 			allEntries = localBookingService.find(null, null);
-			return new ClientTableModel(allEntries);
 		} else {
 			try {
 				allEntries = remoteBookingService.find(null, null);
-				return new ClientTableModel(allEntries);//TODO Need to save the state of the table. Columns are reseting every call
+				 //TODO Need to save the state of the table. Columns are reseting every call
 			} catch (final RemoteException re) {
 				throw new ServiceUnavailableException(re);
 			}
 		}
+		
+		tableModel = new ClientTableModel(allEntries);
+		return tableModel;
 	}
 
 	public TableModel getSpecificEntries(final String name,
 			final String location) throws ServiceUnavailableException,
 			BookingServiceException {
-		final List<String[]> matchingEntries;
+		final List<Record> matchingEntries;
 		if (mode.equals(Mode.LOCAL)) {
 			matchingEntries = localBookingService.find(name, location);
-			return new ClientTableModel(matchingEntries);
 		} else {
 			try {
 				matchingEntries = remoteBookingService.find(name, location);
-				return new ClientTableModel(matchingEntries);
+			} catch (final RemoteException re) {
+				throw new ServiceUnavailableException(re);
+			}
+		}
+
+		tableModel = new ClientTableModel(matchingEntries);
+		return tableModel;
+	}
+
+	public void reserveRoom(final int recNo, final String customerID)
+			throws InvalidCustomerIDException, BookingServiceException, ServiceUnavailableException {
+		if (!isValidCustomerID(customerID)) {
+			throw new InvalidCustomerIDException(customerID);
+		}
+		
+		final Record record = tableModel.getRecord(recNo);
+
+		if (mode.equals(Mode.LOCAL)) {
+			localBookingService.book(record.getRecordNumber(), customerID);
+		} else {
+			try {
+				remoteBookingService.book(record.getRecordNumber(), customerID);
 			} catch (final RemoteException re) {
 				throw new ServiceUnavailableException(re);
 			}
@@ -97,37 +122,18 @@ public class ClientController {
 
 	}
 
-	public void reserveRoom(final int recNo, final String customerID)
-			throws InvalidCustomerIDException, BookingServiceException {
-		if (!isValidCustomerID(customerID)) {
-			throw new InvalidCustomerIDException(customerID);
-		}
-
+	public void unreserveRoom(final int recNo) throws RecordNotBookedException, BookingServiceException, ServiceUnavailableException {
+		
+		final Record record = tableModel.getRecord(recNo);
+		
 		if (mode.equals(Mode.LOCAL)) {
-			localBookingService.book(recNo, customerID);
+			localBookingService.unbook(record.getRecordNumber());
 		} else {
 			try {
-				remoteBookingService.book(recNo, customerID);
-			} catch (final RemoteException e) {
-				// TODO handle remote exception
+				remoteBookingService.unbook(record.getRecordNumber());
+			} catch (final RemoteException re) {
+				throw new ServiceUnavailableException(re);
 			}
-		}
-
-	}
-
-	public void unreserveRoom(final int recNo) throws RecordNotBookedException {
-		try {
-			if (mode.equals(Mode.LOCAL)) {
-				localBookingService.unbook(recNo);
-			} else {
-				try {
-					remoteBookingService.unbook(recNo);
-				} catch (final RemoteException e) {
-					// TODO handle remote exception
-				}
-			}
-		} catch (final BookingServiceException e) {
-			// TODO handle exception
 		}
 
 	}

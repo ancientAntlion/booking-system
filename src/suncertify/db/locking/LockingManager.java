@@ -29,8 +29,10 @@ public class LockingManager {
 	}
 	
 	public void verifyCookie(final int recNo, final long lockCookie) throws SecurityException {
-		LockObject lockObject = new LockObject();
-		lockObject = LockingManager.recordLockMap.putIfAbsent(recNo, lockObject);
+		LockObject lockObject = LockingManager.recordLockMap.get(recNo);
+		if(lockObject == null){
+			throw new SecurityException("There is no lock on record record " + recNo + " so access is denied");
+		}
 		if (lockObject.getCookie() != lockCookie) {
 			throw new SecurityException("Supplied cookie (" + lockCookie + ") does not match record cookie (" + lockObject.getCookie() + ")");
 		}
