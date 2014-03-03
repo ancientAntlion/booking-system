@@ -4,6 +4,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import suncertify.db.exceptions.SecurityException;
 
+/**
+ * @author Aaron
+ *
+ */
 public class LockObject {
 	
 	private long lockCookie;
@@ -14,11 +18,17 @@ public class LockObject {
 	
 	private boolean currentlyLocked;
 		
+	/**
+	 * 
+	 */
 	public LockObject(){
 		lockCookie = -1L;
 		currentlyLocked = false;
 	}
 	
+	/**
+	 * @return
+	 */
 	public long lock(){
 		lock.lock();
 		try{
@@ -34,6 +44,10 @@ public class LockObject {
 		}
 	}
 	
+	/**
+	 * @param lockCookie
+	 * @throws SecurityException
+	 */
 	public void unlock(final long lockCookie) throws SecurityException{
 		lock.lock();
 		try{
@@ -48,6 +62,9 @@ public class LockObject {
 		}
 	}
 	
+	/**
+	 * @return
+	 */
 	public Long getCookie(){
 		return lockCookie;
 	}

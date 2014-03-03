@@ -12,26 +12,39 @@ import suncertify.db.exceptions.DuplicateKeyException;
 import suncertify.db.exceptions.RecordNotFoundException;
 import suncertify.db.exceptions.SecurityException;
 
+/**
+ * @author Aaron
+ * 
+ * Used to interact with the Database on the physical file system.
+ * This class should exists to separate the physical disk operations from
+ * The business logic elsewhere in the program.
+ */
 public class DBAccess {
-
-
-	private final String whitespaceString = "                                                                ";
 	
-	private final int singleRecordByteSize = 160;
+	/**
+	 * White space string 160 characters long used to "pad" records to their appropriate sizes
+	 */
+	public static String whitespaceString = "                                                                ";
+	
+	public static int singleRecordByteSize = 160;
 
-	private final int[] recordEntrySizes = { 64, 64, 4, 1, 8, 10, 8 };
+	public static int[] recordEntrySizes = { 64, 64, 4, 1, 8, 10, 8 };
 
-	private final int[] recordEntryPositions = { 0, 64, 128, 132, 133, 141,
+	public static int[] recordEntryPositions = { 0, 64, 128, 132, 133, 141,
 			151, 159 };
 
-	private final int firstRecordIndex = 56;
+	public static int firstRecordIndex = 56;
 
-	private final int firstRecordNameIndex = firstRecordIndex + 1;
+	public static int firstRecordNameIndex = firstRecordIndex + 1;
 
-	private final int numberOfFieldsInRecord = 7;
+	public static int numberOfFieldsInRecord = 7;
 	
 	private static RandomAccessFile databaseFile;
 		
+	/**
+	 * @param dbLocation
+	 * @throws DatabaseInitializationException
+	 */
 	public DBAccess(final String dbLocation) throws DatabaseInitializationException {
 		try {
 			DBAccess.databaseFile = new RandomAccessFile(dbLocation, "rw");
@@ -40,6 +53,12 @@ public class DBAccess {
 		}
 	}
 	
+	/**
+	 * @param recNo
+	 * @return
+	 * @throws RecordNotFoundException
+	 * @throws EOFException
+	 */
 	public String[] getRecord(final int recNo) throws RecordNotFoundException, EOFException {
 
 		try {
@@ -72,6 +91,11 @@ public class DBAccess {
 
 	}
 
+	/**
+	 * @param recNo
+	 * @param data
+	 * @throws RecordNotFoundException
+	 */
 	public void update(final int recNo, final String[] data) throws RecordNotFoundException{
 
 		try {
@@ -102,6 +126,11 @@ public class DBAccess {
 
 	}
 
+	/**
+	 * @param recNo
+	 * @throws RecordNotFoundException
+	 * @throws SecurityException
+	 */
 	public void delete(final int recNo)
 			throws RecordNotFoundException, SecurityException {
 		try {
@@ -126,6 +155,10 @@ public class DBAccess {
 		}
 	}
 	
+	/**
+	 * @param criteria
+	 * @return
+	 */
 	public int[] find(String[] criteria) {
 		final List<Integer> resultList = new ArrayList<Integer>();
 			for(int i = 0;;i++){
@@ -167,6 +200,11 @@ public class DBAccess {
 
 	}
 
+	/**
+	 * @param data
+	 * @return
+	 * @throws DuplicateKeyException
+	 */
 	public int create(final String[] data) throws DuplicateKeyException {
 		try {
 			
@@ -187,6 +225,10 @@ public class DBAccess {
 		
 	}
 
+	/**
+	 * @param data
+	 * @return
+	 */
 	private byte[] constructWritableByteArray(final String[] data) {
 		String finalString = "";
 
@@ -208,6 +250,11 @@ public class DBAccess {
 		return finalString.getBytes();
 	}
 
+	/**
+	 * @param data
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 */
 	private String[] constructReadableStringArray(final byte[] data)
 			throws UnsupportedEncodingException {
 		final String[] resultsArray = new String[numberOfFieldsInRecord];
@@ -221,6 +268,10 @@ public class DBAccess {
 		return resultsArray;
 	}
 
+	/**
+	 * @return
+	 * @throws IOException
+	 */
 	private long getFirstWritableIndex() throws IOException {
 		try {
 			for (int i = firstRecordIndex; i < DBAccess.databaseFile.length(); i = i

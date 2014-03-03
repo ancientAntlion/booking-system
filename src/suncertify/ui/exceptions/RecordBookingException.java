@@ -10,6 +10,9 @@ public class RecordBookingException extends Exception {
 
 	private final int recNo;
 
+	/**
+	 * @param recNo
+	 */
 	public RecordBookingException(final int recNo) {
 		this.recNo = recNo;
 	}

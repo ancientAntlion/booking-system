@@ -10,6 +10,9 @@ public class ServiceUnavailableException extends Exception {
 
 	private final Exception exception;
 
+	/**
+	 * @param exception
+	 */
 	public ServiceUnavailableException(final Exception exception) {
 		this.exception = exception;
 	}

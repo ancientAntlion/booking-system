@@ -10,6 +10,9 @@ import javax.swing.JOptionPane;
 
 public class ServerHelper {
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
         JFileChooser fileChooser = new JFileChooser();
@@ -46,34 +49,7 @@ public class ServerHelper {
         	JOptionPane.showMessageDialog(null, "An error occurred.");
         	System.exit(0);
         }
-        
-        
-		
-		
-		
-		//////////////
-		
-//		
-//		JFileChooser fileChooser = new JFileChooser();
-//		
-//		
-//		JOptionPane.
-//		
-//        try {
-//        	
-//        	
-//        	
-//            String name = "BookingService";
-//            RemoteBookingService bookingService = new ComputeEngine();
-//            Compute stub =
-//                (Compute) UnicastRemoteObject.exportObject(engine, 0);
-//            Registry registry = LocateRegistry.getRegistry();
-//            registry.rebind(name, stub);
-//            System.out.println("ComputeEngine bound");
-//        } catch (Exception e) {
-//            System.err.println("ComputeEngine exception:");
-//            e.printStackTrace();
-//        }
+    
     }
 	
 }

@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -28,10 +29,12 @@ import javax.swing.table.TableModel;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.InvalidModeException;
-import suncertify.ui.exceptions.RecordAlreadyBookedException;
-import suncertify.ui.exceptions.RecordNotBookedException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
+/**
+ * @author Aaron
+ *
+ */
 public class ClientView extends JFrame {
 
 	private static final long serialVersionUID = 8980678964743452622L;
@@ -97,6 +100,7 @@ public class ClientView extends JFrame {
 		
 		table = initTable(tableModel);
 		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
+		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
@@ -155,6 +159,9 @@ public class ClientView extends JFrame {
 
 	}
 
+	/**
+	 * @param args
+	 */
 	public static void main(final String[] args) {
 		try{
 			final Mode mode = getMode(args);
@@ -162,21 +169,28 @@ public class ClientView extends JFrame {
 			clientGUI.setVisible(true);
 		}catch(InvalidModeException ime){
 			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
+			return;
 		}catch(ConnectException ce){
 			JOptionPane.showMessageDialog(null, "Exception encountered while attempting to connect to server\n\n" + ce);
+			return;
 		}catch (final ServiceUnavailableException sue) {
-			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			JOptionPane.showMessageDialog(null, "ServiceUnavailableException encountered - " + sue.getException().getMessage());
 			return;
 		}catch (final BookingServiceException bse) {
 			JOptionPane.showMessageDialog(null, bse);
 			return;
 		}catch(Exception e){
-			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
+			JOptionPane.showMessageDialog(null, "3Exception encountered\n\n" + e);
 			return;
 		}
 
 	}
 	
+	/**
+	 * @param args
+	 * @return
+	 * @throws InvalidModeException
+	 */
 	private static Mode getMode(final String[] args) throws InvalidModeException {
 		if(args.length == 0){
 			throw new InvalidModeException();
@@ -189,10 +203,20 @@ public class ClientView extends JFrame {
 		}
 	}
 
+	/**
+	 * @param tableModel
+	 * @return
+	 */
 	private JTable initTable(final TableModel tableModel) {
 		return new JTable(tableModel);
 	}
 
+	/**
+	 * @param name
+	 * @param location
+	 * @throws ServiceUnavailableException
+	 * @throws BookingServiceException
+	 */
 	private void updateTable(final String name, final String location) throws ServiceUnavailableException, BookingServiceException {
 		
 		if (name == null && location == null) {
@@ -204,6 +228,9 @@ public class ClientView extends JFrame {
 		table.setModel(tableModel);
 	}
 
+	/**
+	 * @return
+	 */
 	private JButton createBookButton() {
 		final JButton bookButton = new JButton("Create Booking");
 
@@ -220,6 +247,9 @@ public class ClientView extends JFrame {
 		return bookButton;
 	}
 
+	/**
+	 * @return
+	 */
 	private JButton createUnBookButton() {
 		final JButton unBookButton = new JButton("Remove Booking");
 
@@ -236,6 +266,9 @@ public class ClientView extends JFrame {
 		return unBookButton;
 	}
 
+	/**
+	 * @return
+	 */
 	private JButton createSearchButton() {
 		final JButton searchButton = new JButton("Search");
 
@@ -258,6 +291,9 @@ public class ClientView extends JFrame {
 		return searchButton;
 	}
 
+	/**
+	 * 
+	 */
 	private void handleBooking() {
 		String customerID;
 		int recNo;
@@ -266,9 +302,6 @@ public class ClientView extends JFrame {
 			customerID = JOptionPane.showInputDialog(mainPanel,
 					"Enter Customer ID (8 Digits)");
 			if (customerID != null) {
-				// TODO using selected row is not good enough when results are
-				// filtered, fix this
-				System.out.println("getting selected row");
 				recNo = table.getSelectedRow();
 				System.out.println("selected row gotten " + recNo);
 	
@@ -287,18 +320,16 @@ public class ClientView extends JFrame {
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	private void handleUnbooking() {
 		try {
-			// TODO using selected row is not good enough when results are
-			// filtered, fix this
 			final int recNo = table.getSelectedRow();
 
 			controller.unreserveRoom(recNo);
 			
 			updateTable(nameSearchBar.getText(), locationSearchBar.getText());
-		} catch (final RecordNotBookedException e) {
-			JOptionPane.showMessageDialog(mainPanel,
-					"Record has not been booked!");
 		} catch (BookingServiceException bse) {
 			JOptionPane.showMessageDialog(mainPanel,
 					"Record has not been booked!");
@@ -307,22 +338,6 @@ public class ClientView extends JFrame {
 			System.exit(0);
 		}
 		
-	}
-
-	private static Mode convertStringToMode(final String mode) {
-		if (mode == null) {
-			return null;
-		}
-
-		if (mode.equals("Local")) {
-			return Mode.LOCAL;
-		}
-
-		if (mode.equals("Remote")) {
-			return Mode.REMOTE;
-		}
-
-		return Mode.NOT_SPECIFIED;
 	}
 
 }

@@ -1,8 +1,8 @@
 package suncertify.ui.exceptions;
 
 /**
- * @author eaarcot
- * 
+ * @author Aaron
+ *
  */
 public class InvalidCustomerIDException extends Exception {
 
@@ -10,6 +10,9 @@ public class InvalidCustomerIDException extends Exception {
 
 	private final String customerId;
 
+	/**
+	 * @param customerId
+	 */
 	public InvalidCustomerIDException(final String customerId) {
 		this.customerId = customerId;
 	}

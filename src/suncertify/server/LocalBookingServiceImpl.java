@@ -1,6 +1,5 @@
 package suncertify.server;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +15,18 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 	
 	private DB database;
 	
+	/**
+	 * @param dbFileName
+	 * @throws DatabaseInitializationException
+	 */
 	public LocalBookingServiceImpl(final String dbFileName) throws DatabaseInitializationException {
 		database = new Data(dbFileName);
 	}
 	
 	
+	/* (non-Javadoc)
+	 * @see suncertify.server.LocalBookingService#book(int, java.lang.String)
+	 */
 	public void book(final int recNo, final String customerID) throws BookingServiceException{
 		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
@@ -52,6 +58,9 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see suncertify.server.LocalBookingService#unbook(int)
+	 */
 	public void unbook(final int recNo) throws BookingServiceException{
 		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
@@ -82,6 +91,9 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see suncertify.server.LocalBookingService#find(java.lang.String, java.lang.String)
+	 */
 	public List<Record> find(final String name, final String location) throws BookingServiceException{
 		
 		final String[] criteria = constructCriteria(name, location);
@@ -102,6 +114,11 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 		
 	}
 	
+	/**
+	 * @param name
+	 * @param location
+	 * @return
+	 */
 	private String[] constructCriteria(final String name, final String location) {
 		final String[] criteria = new String[7];
 		criteria[0] = name;
@@ -110,6 +127,11 @@ public class LocalBookingServiceImpl implements LocalBookingService {
 		return criteria;
 	}
 	
+	/**
+	 * @param dbRecord
+	 * @param recordNumber
+	 * @return
+	 */
 	private Record constructRecordObject(final String[] dbRecord, final int recordNumber) {
 		Record record = new Record(dbRecord, recordNumber);
 

@@ -7,8 +7,13 @@ package suncertify.ui.exceptions;
 public class RecordAlreadyBookedException extends RecordBookingException {
 	
 	private static final long serialVersionUID = 145483798743149230L;
+	
 	private String customerId;
 
+	/**
+	 * @param recNo
+	 * @param customerId
+	 */
 	public RecordAlreadyBookedException(final int recNo, final String customerId) {
 		super(recNo);
 		this.customerId = customerId;

@@ -12,15 +12,26 @@ import suncertify.db.exceptions.SecurityException;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
 
+/**
+ * @author Aaron
+ *
+ */
 public class RemoteBookingServiceImpl implements RemoteBookingService {
 	
 	private DB database;
 	
+	/**
+	 * @param dbFileName
+	 * @throws DatabaseInitializationException
+	 */
 	public RemoteBookingServiceImpl(final String dbFileName)  throws DatabaseInitializationException {
 		database = new Data(dbFileName);
 	}
 	
 
+	/* (non-Javadoc)
+	 * @see suncertify.server.BookingService#book(int, java.lang.String)
+	 */
 	public void book(final int recNo, final String customerID) throws BookingServiceException, RemoteException{
 		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
@@ -52,6 +63,9 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see suncertify.server.BookingService#unbook(int)
+	 */
 	public void unbook(final int recNo) throws BookingServiceException, RemoteException{
 		Long lockCookie = 0L;
 		boolean successfullyLocked = false;
@@ -82,6 +96,9 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see suncertify.server.BookingService#find(java.lang.String, java.lang.String)
+	 */
 	public List<Record> find(final String name, final String location) throws BookingServiceException, RemoteException{
 		
 		final String[] criteria = constructCriteria(name, location);
@@ -102,6 +119,11 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		
 	}
 	
+	/**
+	 * @param name
+	 * @param location
+	 * @return
+	 */
 	private String[] constructCriteria(final String name, final String location) {
 		final String[] criteria = new String[7];
 		criteria[0] = name;
@@ -110,6 +132,11 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		return criteria;
 	}
 	
+	/**
+	 * @param dbRecord
+	 * @param recordNumber
+	 * @return
+	 */
 	private Record constructRecordObject(final String[] dbRecord, final int recordNumber) {
 		Record record = new Record(dbRecord, recordNumber);
 		

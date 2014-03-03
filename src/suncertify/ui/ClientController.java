@@ -4,7 +4,6 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
 
@@ -18,9 +17,12 @@ import suncertify.server.RemoteBookingService;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
-import suncertify.ui.exceptions.RecordNotBookedException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
+/**
+ * @author Aaron
+ *
+ */
 public class ClientController {
 	
 	final static String SERVICE_NAME = "BookingService";
@@ -38,6 +40,10 @@ public class ClientController {
 
 	public static String customerFieldWhiteSpace = "        ";
 
+	/**
+	 * @param mode
+	 * @throws ServiceUnavailableException
+	 */
 	public ClientController(final Mode mode) throws ServiceUnavailableException {
 		try {
 			this.mode = mode;
@@ -65,6 +71,11 @@ public class ClientController {
 		}
 	}
 
+	/**
+	 * @return
+	 * @throws ServiceUnavailableException
+	 * @throws BookingServiceException
+	 */
 	public TableModel getAllEntries() throws ServiceUnavailableException,
 			BookingServiceException {
 
@@ -84,6 +95,13 @@ public class ClientController {
 		return tableModel;
 	}
 
+	/**
+	 * @param name
+	 * @param location
+	 * @return
+	 * @throws ServiceUnavailableException
+	 * @throws BookingServiceException
+	 */
 	public TableModel getSpecificEntries(final String name,
 			final String location) throws ServiceUnavailableException,
 			BookingServiceException {
@@ -102,6 +120,13 @@ public class ClientController {
 		return tableModel;
 	}
 
+	/**
+	 * @param recNo
+	 * @param customerID
+	 * @throws InvalidCustomerIDException
+	 * @throws BookingServiceException
+	 * @throws ServiceUnavailableException
+	 */
 	public void reserveRoom(final int recNo, final String customerID)
 			throws InvalidCustomerIDException, BookingServiceException, ServiceUnavailableException {
 		if (!isValidCustomerID(customerID)) {
@@ -122,7 +147,12 @@ public class ClientController {
 
 	}
 
-	public void unreserveRoom(final int recNo) throws RecordNotBookedException, BookingServiceException, ServiceUnavailableException {
+	/**
+	 * @param recNo
+	 * @throws BookingServiceException
+	 * @throws ServiceUnavailableException
+	 */
+	public void unreserveRoom(final int recNo) throws BookingServiceException, ServiceUnavailableException {
 		
 		final Record record = tableModel.getRecord(recNo);
 		
@@ -138,6 +168,10 @@ public class ClientController {
 
 	}
 
+	/**
+	 * @param customerID
+	 * @return
+	 */
 	private boolean isValidCustomerID(final String customerID) {
 		if (customerID.length() == 8 && customerID.matches("-?\\d+(\\.\\d+)?")) {
 			return true;
