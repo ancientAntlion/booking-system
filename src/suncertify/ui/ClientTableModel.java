@@ -7,8 +7,12 @@ import javax.swing.table.AbstractTableModel;
 import suncertify.shared.model.Record;
 
 /**
+ * The ClientTableModel is the model that is update which shows the client what they have requested.
+ * 
+ * This class contains a list of records and overrides some AbstractTableModel methods so that
+ * A table with this model in place will display data from this list of records.
+ * 
  * @author Aaron
- *
  */
 public class ClientTableModel extends AbstractTableModel {
 
@@ -19,6 +23,8 @@ public class ClientTableModel extends AbstractTableModel {
     protected List<Record> recordList;
 
     /**
+     * Constructor
+     * 
      * @param recordList
      */
     public ClientTableModel(List<Record> recordList)

@@ -37,6 +37,10 @@ import suncertify.ui.exceptions.InvalidModeException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
 /**
+ * The ClientView contains all the UI & swing components, as well as the actionlisteners attached
+ * To some of those components. It's function is to display a UI to the user, and fire requests from
+ * The user up to the controller to be handled.
+ * 
  * @author Aaron
  *
  */
@@ -68,22 +72,26 @@ public class ClientView extends JFrame {
 	final JButton unBookButton;
 	final JButton searchButton;
 
+
 	/**
 	 * The constructor for the client GUI
-	 * @throws NotBoundException 
-	 * @throws RemoteException 
-	 * @throws BookingServiceException 
+	 * 
+	 * @param mode
+	 * @throws ServiceUnavailableException
+	 * @throws RemoteException
+	 * @throws NotBoundException
+	 * @throws BookingServiceException
 	 */
 	public ClientView(final Mode mode) throws ServiceUnavailableException, RemoteException, NotBoundException, BookingServiceException {
 
 		// Set properties
-		setTitle("URLyBird");
-		setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
-		setBackground(Color.GRAY);
+		this.setTitle("URLyBird");
+		this.setSize(JFRAME_WIDTH, JFRAME_HEIGHT);
+		this.setBackground(Color.GRAY);
+		this.setResizable(false);
 		
 		// Initialize all components
 		mainPanel = new JPanel();
-
 		controller = new ClientController(mode);
 		
 		topPanel = new JPanel();
@@ -106,6 +114,8 @@ public class ClientView extends JFrame {
 		table = initTable(tableModel);
 		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.getTableHeader().setReorderingAllowed(false);
+		table.getTableHeader().setResizingAllowed(false);
 
 		scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
@@ -114,8 +124,6 @@ public class ClientView extends JFrame {
 		bookButton = createBookButton();
 		unBookButton = createUnBookButton();
 		searchButton = createSearchButton();
-
-		table.setBorder(new EmptyBorder(new Insets(5, 5, 5, 5)));
 
 		searchButtonPanel.setLayout(new BorderLayout());
 		searchButtonPanel.add(searchButton, BorderLayout.WEST);
@@ -152,20 +160,6 @@ public class ClientView extends JFrame {
 		vertical.setFloatable(false);
 		vertical.setMargin(new Insets(10, 5, 5, 5));
 		
-		final JMenuBar menuBar = new JMenuBar();
-		final JMenu fileMenu = new JMenu("File");
-		final JMenuItem quitMenuItem = new JMenuItem("Quit");
-		quitMenuItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(final ActionEvent actionEvent) {
-				System.out.println("AAA");
-			}
-		});
-		fileMenu.add(quitMenuItem);
-		menuBar.add(fileMenu);
-
-		this.setJMenuBar(menuBar);
-
 		mainPanel.add(topPanel, BorderLayout.PAGE_START);
 		mainPanel.add(tablePanel, BorderLayout.CENTER);
 		mainPanel.add(bottomPanel, BorderLayout.PAGE_END);
@@ -179,6 +173,9 @@ public class ClientView extends JFrame {
 	}
 
 	/**
+	 * The Client launcher. This method takes a single command line arguement which must be either
+	 * "Local" or "Remote".
+	 * 
 	 * @param args
 	 */
 	public static void main(final String[] args) {
@@ -202,13 +199,15 @@ public class ClientView extends JFrame {
 			JOptionPane.showMessageDialog(null, bse);
 			return;
 		}catch(Exception e){
-			JOptionPane.showMessageDialog(null, "3Exception encountered\n\n" + e);
+			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
 			return;
 		}
 
 	}
 	
 	/**
+	 * Takes the command line arguments, determines the mode and returns it.
+	 * 
 	 * @param args
 	 * @return
 	 * @throws InvalidModeException
@@ -226,6 +225,8 @@ public class ClientView extends JFrame {
 	}
 
 	/**
+	 * Initializes the table
+	 * 
 	 * @param tableModel
 	 * @return
 	 */
@@ -234,6 +235,8 @@ public class ClientView extends JFrame {
 	}
 
 	/**
+	 * Requests a tablemodel from the controller and uses it in our table, which updates our table
+	 * 
 	 * @param name
 	 * @param location
 	 * @throws ServiceUnavailableException
@@ -251,7 +254,9 @@ public class ClientView extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Initializes the bookButton and attaches an ActionListener to it
+	 * 
+	 * @return bookButton
 	 */
 	private JButton createBookButton() {
 		final JButton bookButton = new JButton("Create Booking");
@@ -261,8 +266,6 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				handleBooking();
-
-				System.out.println("Create Booking Button Clicked");
 			}
 		});
 
@@ -270,7 +273,9 @@ public class ClientView extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Initializes the unbookButton and attaches an ActionListener to it
+	 * 
+	 * @return unbookButton
 	 */
 	private JButton createUnBookButton() {
 		final JButton unBookButton = new JButton("Remove Booking");
@@ -280,8 +285,6 @@ public class ClientView extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent e) {
 				handleUnbooking();
-				
-				System.out.println("Remove Booking Button Clicked");
 			}
 		});
 
@@ -289,7 +292,9 @@ public class ClientView extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Initializes the searchButton and attaches an ActionListener to it
+	 * 
+	 * @return searchButton
 	 */
 	private JButton createSearchButton() {
 		final JButton searchButton = new JButton("Search");
@@ -314,19 +319,19 @@ public class ClientView extends JFrame {
 	}
 
 	/**
-	 * 
+	 * Sends the request for a booking up to the controller and updates our table afterward
 	 */
 	private void handleBooking() {
 		String customerID;
-		int recNo;
+		int recNo = table.getSelectedRow();
+		if(recNo == -1){
+			return;
+		}
 		
 		try {
 			customerID = JOptionPane.showInputDialog(mainPanel,
 					"Enter Customer ID (8 Digits)");
-			if (customerID != null) {
-				recNo = table.getSelectedRow();
-				System.out.println("selected row gotten " + recNo);
-	
+			if (customerID != null) {	
 				controller.reserveRoom(recNo, customerID);
 	
 				updateTable(nameSearchBar.getText(),
@@ -343,11 +348,14 @@ public class ClientView extends JFrame {
 	}
 	
 	/**
-	 * 
+	 * Sends the request for an unbooking up to the controller and updates our table afterward
 	 */
 	private void handleUnbooking() {
 		try {
-			final int recNo = table.getSelectedRow();
+			int recNo = table.getSelectedRow();
+			if(recNo == -1){
+				return;
+			}
 
 			controller.unreserveRoom(recNo);
 			
@@ -362,6 +370,12 @@ public class ClientView extends JFrame {
 		
 	}
 	
+	
+	/**
+	 * Initializes a WindowAdapter that will kill our client process if client window is closed
+	 * 
+	 * @return windowAdapter
+	 */
 	private static WindowAdapter getClosingWindowAdapater(){
 		WindowAdapter windowAdapter = new WindowAdapter() {
 		    @Override

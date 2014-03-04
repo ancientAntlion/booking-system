@@ -27,7 +27,7 @@ public class Record implements Serializable {
 	}
 
 	/**
-	 * @return
+	 * @return recordData
 	 */
 	public String[] getRecordData() {
 		return recordData;
@@ -41,7 +41,7 @@ public class Record implements Serializable {
 	}
 	
 	/**
-	 * @return
+	 * @return recordNumber
 	 */
 	public int getRecordNumber() {
 		return recordNumber;

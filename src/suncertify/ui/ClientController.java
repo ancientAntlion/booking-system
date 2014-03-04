@@ -21,8 +21,14 @@ import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
 /**
+ * This is the controller class. It is the centre and brains of the client side application.
+ * A controller instance is owned by the view. It's methods are called by the view
+ * And calls from the view in turn update the model.
+ * 
+ * The controller contains the reference to the serverside booking service. We have 2 BookingService
+ * objects, 1 for remote and 1 for local. Depending on what mode is selected 1 will be ignored.
+ * 
  * @author Aaron
- *
  */
 public class ClientController {
 	
@@ -39,9 +45,9 @@ public class ClientController {
 	String[] columnNames = { "Name", "Location", "Size", "Smoking", "Rate",
 			"Date", "Owner" };
 
-	public static String customerFieldWhiteSpace = "        ";
-
 	/**
+	 * Construct in which we initialize our BookingService
+	 * 
 	 * @param mode
 	 * @throws ServiceUnavailableException
 	 */
@@ -64,7 +70,6 @@ public class ClientController {
 				
 				final String url = "rmi://" + serverAddress + "/" + SERVICE_NAME;
 				remoteBookingService = (RemoteBookingService) Naming.lookup(url);
-				System.out.println("Connected to BookingService");
 			}
 		} catch (final RemoteException re) {
 			throw new ServiceUnavailableException(re);
@@ -78,7 +83,9 @@ public class ClientController {
 	}
 
 	/**
-	 * @return
+	 * Gets all records from the database and returns a TableModel filled with these records
+	 * 
+	 * @return tableModel
 	 * @throws ServiceUnavailableException
 	 * @throws BookingServiceException
 	 */
@@ -91,20 +98,22 @@ public class ClientController {
 		} else {
 			try {
 				allEntries = remoteBookingService.find(null, null);
-				 //TODO Need to save the state of the table. Columns are reseting every call
 			} catch (final RemoteException re) {
 				throw new ServiceUnavailableException(re);
 			}
 		}
-		
+
 		tableModel = new ClientTableModel(allEntries);
 		return tableModel;
 	}
 
 	/**
+	 * Gets a filtered list of records from the database and returns a TableModel filled with
+	 * these records
+	 * 
 	 * @param name
 	 * @param location
-	 * @return
+	 * @return tableModel
 	 * @throws ServiceUnavailableException
 	 * @throws BookingServiceException
 	 */
@@ -127,6 +136,8 @@ public class ClientController {
 	}
 
 	/**
+	 * Reserves a single room with the specified customerID
+	 * 
 	 * @param recNo
 	 * @param customerID
 	 * @throws InvalidCustomerIDException
@@ -137,6 +148,10 @@ public class ClientController {
 			throws InvalidCustomerIDException, BookingServiceException, ServiceUnavailableException {
 		if (!isValidCustomerID(customerID)) {
 			throw new InvalidCustomerIDException(customerID);
+		}
+		
+		if(recNo == -1){
+			return;
 		}
 		
 		final Record record = tableModel.getRecord(recNo);
@@ -154,6 +169,8 @@ public class ClientController {
 	}
 
 	/**
+	 * Unreserves a single room
+	 * 
 	 * @param recNo
 	 * @throws BookingServiceException
 	 * @throws ServiceUnavailableException
@@ -175,6 +192,8 @@ public class ClientController {
 	}
 
 	/**
+	 * Determintes if a customerID is numeric and eight digits long
+	 * 
 	 * @param customerID
 	 * @return
 	 */
