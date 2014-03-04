@@ -1,6 +1,7 @@
 package suncertify.db;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
@@ -13,11 +14,14 @@ import suncertify.db.exceptions.RecordNotFoundException;
 import suncertify.db.exceptions.SecurityException;
 
 /**
- * @author Aaron
- * 
  * Used to interact with the Database on the physical file system.
  * This class should exists to separate the physical disk operations from
  * The business logic elsewhere in the program.
+ * 
+ * The actual RAF is private static, and anytime it is used is synchronized
+ * to ensure consistency with the file pointer during reads/writes
+ * 
+ * @author Aaron
  */
 public class DBAccess {
 	
@@ -42,18 +46,32 @@ public class DBAccess {
 	private static RandomAccessFile databaseFile;
 		
 	/**
+	 * Class initializes and we verify the file exists
+	 * 
 	 * @param dbLocation
 	 * @throws DatabaseInitializationException
 	 */
 	public DBAccess(final String dbLocation) throws DatabaseInitializationException {
 		try {
-			DBAccess.databaseFile = new RandomAccessFile(dbLocation, "rw");
+			File dbFile = new File(dbLocation);
+			if(dbFile.exists() && !dbFile.isDirectory()) {
+				DBAccess.databaseFile = new RandomAccessFile(dbFile, "rw");
+			}else{
+				throw new DatabaseInitializationException("Selected file does not exist or is a directory");
+			}
+		} catch (DatabaseInitializationException die) {
+			throw die;
 		} catch (Exception e) {
 			throw new DatabaseInitializationException("Exception encountered while initializing the database : " + e.getMessage());
 		}
 	}
 	
 	/**
+	 * Returns a string array containing a single record. We find the record by first getting the index
+	 * Of the requested record. We do this by multiplying the set record byte size and multiplying it 
+	 * by the record number. This puts the RAF pointer at the start of the desired record. After verifying
+	 * That the byte deletion flag is not set we read it from there. Otherwise we throw a RecordNotFoundException
+	 * 
 	 * @param recNo
 	 * @return
 	 * @throws RecordNotFoundException
@@ -92,6 +110,11 @@ public class DBAccess {
 	}
 
 	/**
+	 * Updates a single record. We find the record by first getting the index of the requested record.
+	 * We do this by multiplying the set record byte size and multiplying it by the record number.
+	 * This puts the RAF pointer at the start of the desired record. After verifying that the byte
+	 * Deletion flag is not set we update it from there. Otherwise we throw a RecordNotFoundException
+	 * 
 	 * @param recNo
 	 * @param data
 	 * @throws RecordNotFoundException
@@ -127,6 +150,11 @@ public class DBAccess {
 	}
 
 	/**
+	 * Deletes a single record. We find the record by first getting the index of the requested record.
+	 * We do this by multiplying the set record byte size and multiplying it by the record number.
+	 * This puts the RAF pointer at the start of the desired record. We change 1 byte which flags the
+	 * record as null. This block in the file now is ready to be overwritten.
+	 * 
 	 * @param recNo
 	 * @throws RecordNotFoundException
 	 * @throws SecurityException
@@ -156,8 +184,19 @@ public class DBAccess {
 	}
 	
 	/**
+	 * Returns an array of record numbers that match the supplied criteria. We use the getRecord()
+	 * method in a loop to pull out every record in the DB. For each record retrieved we check if
+	 * The criteria supplied matches the criteria in the DB. This is done as per the instructions.
+	 * 
+	 * "Returns an array of record numbers that match the specified
+	 * criteria. Field n in the database file is described by
+	 * criteria[n]. A null value in criteria[n] matches any field
+	 * value. A non-null  value in criteria[n] matches any field
+	 * value that begins with criteria[n]. (For example, "Fred"
+	 * matches "Fred" or "Freddy".)
+	 * 
 	 * @param criteria
-	 * @return
+	 * @return recordNumbers
 	 */
 	public int[] find(String[] criteria) {
 		final List<Integer> resultList = new ArrayList<Integer>();
@@ -201,8 +240,16 @@ public class DBAccess {
 	}
 
 	/**
+	 * Creates a single record in the DB and returns the index of that record. We use the
+	 * constructWritableByteArray(String[]) method to construct the byte array, then we use 
+	 * the getFirstWritableIndex() method to determine where to place our file pointer is.
+	 * Then we write the data to the file.
+	 * 
+	 * I chose not to throw the DuplicateKeyException for 2 reasons. I explain my reasons
+	 * In my choices.txt
+	 * 
 	 * @param data
-	 * @return
+	 * @return recordNumber
 	 * @throws DuplicateKeyException
 	 */
 	public int create(final String[] data) throws DuplicateKeyException {
@@ -226,8 +273,10 @@ public class DBAccess {
 	}
 
 	/**
+	 * Converts a String array into a byte array
+	 * 
 	 * @param data
-	 * @return
+	 * @return dataBytes
 	 */
 	private byte[] constructWritableByteArray(final String[] data) {
 		String finalString = "";
@@ -251,14 +300,16 @@ public class DBAccess {
 	}
 
 	/**
-	 * @param data
-	 * @return
+	 * Converts a byte array into a String array
+	 * 
+	 * @param dataBytes
+	 * @return data
 	 * @throws UnsupportedEncodingException
 	 */
-	private String[] constructReadableStringArray(final byte[] data)
+	private String[] constructReadableStringArray(final byte[] dataBytes)
 			throws UnsupportedEncodingException {
 		final String[] resultsArray = new String[numberOfFieldsInRecord];
-		final String entireRow = new String(data, "US-ASCII");
+		final String entireRow = new String(dataBytes, "US-ASCII");
 
 		for (int i = 0; i < numberOfFieldsInRecord; i++) {
 			resultsArray[i] = entireRow.substring(recordEntryPositions[i],
@@ -269,6 +320,11 @@ public class DBAccess {
 	}
 
 	/**
+	 * Locates the first point in the DB that we can write a record. This involves
+	 * Reading the first byte of each record to check if the delete flag is set.
+	 * If none of the records are flagged as deleted then we return a write location
+	 * At the very end of the file
+	 * 
 	 * @return
 	 * @throws IOException
 	 */

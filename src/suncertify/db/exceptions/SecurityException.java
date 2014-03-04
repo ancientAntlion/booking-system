@@ -1,8 +1,10 @@
 package suncertify.db.exceptions;
 
 /**
+ * We throw this exception when the lock cookie supplied does not match the
+ * Lock cookie that is currently holding the lock on a record
+ * 
  * @author Aaron
- *
  */
 public class SecurityException extends Exception {
 

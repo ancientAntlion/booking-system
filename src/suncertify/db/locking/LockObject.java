@@ -5,8 +5,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import suncertify.db.exceptions.SecurityException;
 
 /**
+ * The object that controls the actual lock on records. The class uses a ReentrantLock lock
+ * to control access to records. We lock the ReentrantLock at the start of every method and
+ * unlock it at the end of every method. Inside the methods we change the currentlyLocked boolean
+ * to unlock and lock the record.
+ * 
  * @author Aaron
- *
+ * 
  */
 public class LockObject {
 	
@@ -19,7 +24,7 @@ public class LockObject {
 	private boolean currentlyLocked;
 		
 	/**
-	 * 
+	 * Constructor
 	 */
 	public LockObject(){
 		lockCookie = -1L;
@@ -27,7 +32,10 @@ public class LockObject {
 	}
 	
 	/**
-	 * @return
+	 * Attempts to lock the object. If the object is already locked the thread waits for a signal
+	 * to wake up and attempt to lock again.
+	 * 
+	 * @return lockCookie
 	 */
 	public long lock(){
 		lock.lock();
@@ -37,7 +45,6 @@ public class LockObject {
 			}
 			currentlyLocked = true;
 			lockCookie = LockCookieGenerator.getLockCookie();
-			System.out.println(Thread.currentThread().getId() + " - new lock cookie - " + lockCookie);
 			return lockCookie;
 		}finally{
 			lock.unlock();
@@ -45,6 +52,9 @@ public class LockObject {
 	}
 	
 	/**
+	 * Attempts to unlock the object. If the supplied lockCookie does not match the actual lockCookie then
+	 * A SecurityException is thrown. Otherwise we unlock the object and wake up any sleeping threads
+	 * 
 	 * @param lockCookie
 	 * @throws SecurityException
 	 */
@@ -63,7 +73,7 @@ public class LockObject {
 	}
 	
 	/**
-	 * @return
+	 * @return lockCookie
 	 */
 	public Long getCookie(){
 		return lockCookie;

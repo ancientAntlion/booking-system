@@ -1,17 +1,6 @@
 package suncertify.db;
 
 import java.io.EOFException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 
 import suncertify.db.exceptions.DatabaseInitializationException;
 import suncertify.db.exceptions.DuplicateKeyException;
@@ -20,12 +9,12 @@ import suncertify.db.exceptions.SecurityException;
 import suncertify.db.locking.LockingManager;
 
 /**
- * @author Aaron
- * 
  * Implementation of DB interface supplied by the instructions.
  * 
  * This class is used to interact with the Database. Any interactions with the 
  * Database should be performed through this class.
+ * 
+ * @author Aaron
  */
 public class Data implements DB {
 	

@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,6 +16,9 @@ import java.rmi.RemoteException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -146,11 +151,25 @@ public class ClientView extends JFrame {
 		vertical.setPreferredSize(new Dimension(100, 200));
 		vertical.setFloatable(false);
 		vertical.setMargin(new Insets(10, 5, 5, 5));
+		
+		final JMenuBar menuBar = new JMenuBar();
+		final JMenu fileMenu = new JMenu("File");
+		final JMenuItem quitMenuItem = new JMenuItem("Quit");
+		quitMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(final ActionEvent actionEvent) {
+				System.out.println("AAA");
+			}
+		});
+		fileMenu.add(quitMenuItem);
+		menuBar.add(fileMenu);
+
+		this.setJMenuBar(menuBar);
 
 		mainPanel.add(topPanel, BorderLayout.PAGE_START);
 		mainPanel.add(tablePanel, BorderLayout.CENTER);
 		mainPanel.add(bottomPanel, BorderLayout.PAGE_END);
-
+		
 		getContentPane().add(mainPanel);
 
 		pack();
@@ -166,6 +185,9 @@ public class ClientView extends JFrame {
 		try{
 			final Mode mode = getMode(args);
 			final ClientView clientGUI = new ClientView(mode);
+			
+			clientGUI.addWindowListener(getClosingWindowAdapater());
+						
 			clientGUI.setVisible(true);
 		}catch(InvalidModeException ime){
 			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
@@ -339,5 +361,16 @@ public class ClientView extends JFrame {
 		}
 		
 	}
-
+	
+	private static WindowAdapter getClosingWindowAdapater(){
+		WindowAdapter windowAdapter = new WindowAdapter() {
+		    @Override
+		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+		    	System.exit(0);
+		    }
+		};
+		
+		return windowAdapter;
+	}
+	
 }

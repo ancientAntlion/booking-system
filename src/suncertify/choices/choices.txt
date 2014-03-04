@@ -18,3 +18,15 @@ Since I am not using a local memory cache, and there is no "unique key" in the D
 
 
 3. 
+
+DuplicateKeyException
+
+
+a) Nothing is specified in the spec as the "keys", and even the use of every single field besides the customer number is
+	not enough to be used as a key because a hotel on a street could have numerous rooms that have all the same 
+	criteria.
+	
+b) DuplicateKeyException throws from the create, but not the delete method in the spec. So from a business logic point of
+	view someone could call update() on the DB with the exact same values as an existing record. This could cause a lot of
+	problems for client or server side business logic relying on DuplicateKeyException when the consistency of duplication
+	in the DB can easily be compromised.

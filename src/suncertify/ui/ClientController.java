@@ -16,6 +16,7 @@ import suncertify.server.LocalBookingServiceImpl;
 import suncertify.server.RemoteBookingService;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
+import suncertify.shared.utilities.DBFileChooser;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
@@ -48,8 +49,13 @@ public class ClientController {
 		try {
 			this.mode = mode;
 			if (this.mode.equals(Mode.LOCAL)) {
-				localBookingService = new LocalBookingServiceImpl(
-						"src\\suncertify\\db\\db-1x3.db");
+				final String filePath = DBFileChooser.selectFile();
+				
+				if(filePath == null){
+					JOptionPane.showMessageDialog(null, "An error occurred.");
+					System.exit(0);
+				}
+				localBookingService = new LocalBookingServiceImpl(filePath);
 				remoteBookingService = null;
 			} else {
 				localBookingService = null;

@@ -13,24 +13,41 @@ import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
 
 /**
+ * 
+ * Implementation of RemoteBookingService interface. When the server starts this class is 
+ * Initialized and bound to the RMI Registry. This class has an instance DB which is our gateway
+ * To the database
+ * 
+ * Because the DB interface takes lockCookies when updating and deleting records we have the lock
+ * And unlock handling here rather than inside the DB implementation
+ * 
  * @author Aaron
- *
  */
 public class RemoteBookingServiceImpl implements RemoteBookingService {
 	
 	private DB database;
 	
 	/**
+	 * Constructor
+	 * 
 	 * @param dbFileName
 	 * @throws DatabaseInitializationException
 	 */
-	public RemoteBookingServiceImpl(final String dbFileName)  throws DatabaseInitializationException {
+	public RemoteBookingServiceImpl(final String dbFileName) throws DatabaseInitializationException {
 		database = new Data(dbFileName);
 	}
 	
 
-	/* (non-Javadoc)
-	 * @see suncertify.server.BookingService#book(int, java.lang.String)
+	/**
+	 * Books a record with the supplied ID. We lock the record and when it is successfully locked we set
+	 * The boolean successfullyLocked to true. This is used in the finally block so we know whether or not
+	 * We need to unlock the record. Then we read the record and update the record with the supplied customerID
+	 * We unlock the record in the finally block to ensure records are unlocked even in error scenarios
+	 * 
+	 * @param recNo
+	 * @param customerID
+	 * @throws BookingServiceException
+	 * @throws RemoteException
 	 */
 	public void book(final int recNo, final String customerID) throws BookingServiceException, RemoteException{
 		Long lockCookie = 0L;
@@ -63,8 +80,15 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see suncertify.server.BookingService#unbook(int)
+	/**
+	 * Unbooks a record. We lock the record and when it is successfully locked we set the boolean
+	 * successfullyLocked to true. This is used in the finally block so we know whether or not we need
+	 * To unlock the record. Then we read the record and update the record with a blank customer ID
+	 * We unlock the record in the finally block to ensure records are unlocked even in error scenarios
+	 * 
+	 * @param recNo
+	 * @throws BookingServiceException
+	 * @throws RemoteException
 	 */
 	public void unbook(final int recNo) throws BookingServiceException, RemoteException{
 		Long lockCookie = 0L;
@@ -96,8 +120,15 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see suncertify.server.BookingService#find(java.lang.String, java.lang.String)
+	/**
+	 * Gets a list of records that start with or equal to the supplied name and location.
+	 * If a null value for name or location will match any field value
+	 * 
+	 * @param name
+	 * @param location
+	 * @return recordList
+	 * @throws BookingServiceException
+	 * @throws RemoteException
 	 */
 	public List<Record> find(final String name, final String location) throws BookingServiceException, RemoteException{
 		
@@ -120,9 +151,11 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	}
 	
 	/**
+	 * Constructs a String array that can be sent to the DB.find(String[]) method.
+	 * 
 	 * @param name
 	 * @param location
-	 * @return
+	 * @return criteria
 	 */
 	private String[] constructCriteria(final String name, final String location) {
 		final String[] criteria = new String[7];
@@ -133,9 +166,11 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	}
 	
 	/**
+	 * Converts a String array and record number into a Record domain object
+	 * 
 	 * @param dbRecord
 	 * @param recordNumber
-	 * @return
+	 * @return record
 	 */
 	private Record constructRecordObject(final String[] dbRecord, final int recordNumber) {
 		Record record = new Record(dbRecord, recordNumber);
@@ -144,3 +179,5 @@ public class RemoteBookingServiceImpl implements RemoteBookingService {
 	}
 	
 }
+
+

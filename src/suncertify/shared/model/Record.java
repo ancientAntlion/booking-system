@@ -3,8 +3,11 @@ package suncertify.shared.model;
 import java.io.Serializable;
 
 /**
+ * A domain object which holds a String array containing a single records data and a recordNumber
+ * 
+ * This exists in order to inform the client of where each record sits in the database
+ * 
  * @author Aaron
- *
  */
 public class Record implements Serializable {
 
