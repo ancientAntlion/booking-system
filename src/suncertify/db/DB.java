@@ -4,6 +4,9 @@ import suncertify.db.exceptions.DuplicateKeyException;
 import suncertify.db.exceptions.RecordNotFoundException;
 import suncertify.db.exceptions.SecurityException;
 
+/**
+ *  Interface provided by instructions
+ */
 public interface DB {
 
 	  // Reads a record from the file. Returns an array where each

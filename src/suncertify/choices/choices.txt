@@ -30,3 +30,258 @@ b) DuplicateKeyException throws from the create, but not the delete method in th
 	view someone could call update() on the DB with the exact same values as an existing record. This could cause a lot of
 	problems for client or server side business logic relying on DuplicateKeyException when the consistency of duplication
 	in the DB can easily be compromised.
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+----Choices.txt----
+
+----Contents----
+1. Documentation, Code Conventions, Comments
+2. Networking
+3. Database
+4. Locking
+5. Client Side
+6. General decision and considerations
+
+
+----1. Documentation, Comments, Code Conventions----
+
+Documentation
+	I wrote a javadoc for every class and every method. I omitted descriptions where I thought descriptions redundant
+
+Comments
+	I kept comments to an absolute minimum. Generally I find if large comments are needed then code is not segmented
+well enough and methods do not have specific enough functions or suitable enough names. Variables, methods and classes
+should comment themselves with their names, and if necessary their javadocs.
+
+Code Conventions
+	I try to write each method with 1 clear "job" to be completed, and the name of the method should reflect this.
+The same goes for class names and package/directory structures. It should be clear from each of my class names what
+each class is in charge of or what it is holding.
+
+
+----2. Networking----
+
+RMI
+	I used RMI as my network control protocol.
+	a) RMI is generally easier to implement as it hides a lot of the network code from the developer
+		i)This also results in much less code & easier readability
+	b) Platform independent
+	c) The benefits of sockets are not really pertinent to the project at hand(lower level network control)
+
+Modes
+	My controller has 2 BookingService interfaces. LocalBookingService is used for local mode and RemoteBookingService
+is used for remote mode. These interfaces have a common parent interface BookingService. The difference between them is :
+	a) LocalBookingService declares the methods again, this time not throwing RemoteException
+	b) RemoteBookingService extends Remote so that it can be used over RMI
+	
+	I wanted to totally separate the RMI side of things in the event that a user runs the program in local mode. This is
+the reason I made 2 different interfaces and have 2 objects in my ClientController.java class. If the mode is local then I
+set the RemoteBookingService to null and it is never used. This means that while I am running local mode I do not need to
+surround my server calls with Remote try catches, and any kind of remote/RMI sections of the code do not come into play
+	There is a flipside here in that there is some code duplication server side, but that's the hit I took in order to
+keep local and remote running modes totally separate.
+
+
+BookingService
+	The BookingService itself sits as business logic in front of the database. I didn't want the client to have to
+call methods that would make little sense to a client like "read" and pass a record. I found a logical separation
+here between what the client wanted (book a room) and what the DB was giving us (read, update) so i placed some business
+logic in between.
+
+Server Boot
+	To start the server I created the ServerStarter.java class. It is quite simple, run this class and it will pop up with
+a file chooser dialog. The user must select which file they will use as their DB.
+	I wanted to keep the error checking here to a minimum and assume human competence. So all I check for is that the file
+exists, and that the file is not a directory. After that it doesn't matter to the server if it is a java file, or a text file,
+or anything like that. It will assume the user has selected a file that fits the schema specified in the instructions file.
+
+
+----3. Database----
+
+Delegation pattern
+	I implemented the delegation pattern and pushed the File/Disk responsibilities of the Data class to a separate
+data access class - DBAccess.java. There was a logical split here between DB interactions requested from the business
+layer and the actual physical disk writing.
+
+
+File Handling
+	I used a static RandomAccessFile to speak with the actual DB file. I put all operations with the RAF inside a 
+synchronized block to avoid concurrency problems, such as
+	-Thread1 setting the filepointer,
+	-Thread2 setting the filepointer,
+	-Thread1 reads from file(but pointer is not where it should be)
+I tried to keep the synchronized blocks as small as possible in order to minimize the amount of time threads could be waiting
+
+
+I didn't read the header information from the file, since the spec provides it for me. I just hard coded the headings
+and their individual lengths. I saw no benefit to loading the meta data from the header when I am already told in english
+the schema, and if the layout were to change there is no indication that in later versions the header schema would remain
+the same so I just ignored the header data
+
+
+Cache
+	I did not implement any cache for my project. I did not want the missing link between cache and actual disk memory.
+When operating with a cache we are working with RAM, so that information is susceptible to sudden loss in the event of
+program crashes, hardware crashes, important information in memory is now lost and a room that a CSR thinks is booked
+could easily have never been booked on disk. This can result to double book rooms, bad for business. Since there is nothing
+really in the spec about performance, I went with the slower disk reads to maintain a better data consistency over
+the possible speed benefits of a caching system.
+
+
+DuplicateKeyException
+	I decided not to throw the DuplicateKeyException specified in the DB interface. My reasons for this :
+	
+	a) Nothing is specified in the spec as the "keys", and even the use of every single field besides the customer number is
+	not enough to be used as a key because a hotel on a street could have numerous rooms that have all the same 
+	criteria.
+	
+	b) DuplicateKeyException throws from the create, but not the update method in the spec. So from a business logic point of
+	view someone could call update() on the DB with the exact same values as an existing record, but along with a separate record
+	number. This could cause a lot of problems for client or server side business logic relying on DuplicateKeyException when the
+	consistency of uniqueness in the DB can easily be compromised.
+
+
+Constraints
+    I assume DB side that any write operations have a String array of the correct size, with no null values within
+I did not want to clog up the DB with error checking, null checks, array length checks. These seemed pointless since at
+the moment I have control over what is passed in, and I can just as easily ensure from my business layer *BookingServiceImpl
+that the arrays meet these constraints.
+
+
+----4. Locking----
+
+Locking Overview
+	I went with a re-entrant locking system. It seemed like almost the easiest solution to the specs constraints regarding
+a locked out thread not consuming CPU cycles. I have a LockingManager class which has a static ConcurrentHashMap<int, LockObject>.
+Every entry in the map represents a recordNumber:Lock combo. I will give an example :
+
+	Thread1 wants to lock a record. If a record has not been locked, a LockObject is created and saved in the map along with
+recordNumber 'x'. That LockObject is now hooked in with record 'x', so when a Thread2 attempts to lock record 'x' it will
+pull that LockObject from the map, and run the LockObject.lock() command. Inside LockObject.lock() we check if this object is
+already locked. We will find that it is locked and now Thread2 will sleep awaiting a signal. When Thread1 has finished it will signal
+all other threads waiting on this lock. All threads waiting will wake up and attempt to get the lock. If there are more than 1
+then only 1 will obtain the lock, the others will go back to sleep.
+
+
+LockingManager
+	I delegated all locking out of the Data.java class and into my LockingManager.java class. There was a logical
+responsibility split here so it was natural for me to separate these.
+	My LockingManger has a ConcurrentHashMap containing any previously or currently locked record numbers paired with
+unique LockObjects for each.
+	When the server attempts to lock a record they pass a record number. I use that number to search
+for an existing LockObject. If one exists, I call lock() on it and return the randomly generated longCookie. This cookie is now
+used to unlock the record later.
+	When the server attempts to unlock a record they pass a record number and a long lockCookie. I search for the recordNumber in
+the map. If it exists, I ensure the supplied cookie matches the actual cookie, and then lock the record. If the cookies do not
+match or the record doesn't exist in a map(this means it was never locked) then I throw a SecurityException as dictated by
+the instructions.
+
+BookingService responsibilities
+	Since the interface dictates that a create/delete call must pass in a lockCookie I decided it only logical to perform
+the lock/unlock DB calls from outside of Data. So my locking and unlocking is performed in my Business Layer inside
+RemoteBookingServiceImpl and LocalBookingServiceImpl. I acquire a lock, get the cookie, request my actual write operation
+on DB, followed by an unlock in a finally block(performing this inside a finally block ensures records are unlocked even
+during exception scenarios)
+
+
+Other
+	Since my unlock just looks up a map for a LockObject, RecordNotFoundException will never be thrown from my unlock method.
+My unlock method does not speak to disk so it will never happen.
+
+
+----5. Client Side----
+
+Model-View-Controller
+	I implemented the MVC pattern client side.
+	a) My View is ClientView, which holds all the swing components, actions listeners,
+and an instance of my controller. The ClientView also has a JTable which is populated by a TableModel provided by my Controller.
+The ClientView makes calls to the controller when actionListers trigger after button clicks and that kind of thing.
+	b) My Controller is ClientController. It has a reference to the Booking system, be it local or remote. It also has a 
+ClientTableModel which is returns to the ClientView from many method calls. This ClientTableModel is what the controller populates
+with our data.
+	c) My Model is ClientTableModel. It is used as the model for the JTable in ClientView. ClientTableModel has a list of record
+objects passed into it, and uses those records to display the DB data to the user through the JTable.
+
+
+Launch
+	When launching the GUI the user must have input a command line parameter to dictate which mode they want to run in. Different
+things happen depending on mode selection
+	a) Remote - a text box with a default localhost ip is brought up. The user should fill this box with the IP address of the
+machine on which the server is running. The ClientView then passes the mode up to the controller and we hook into the remote
+service.
+	b) Local - a file selector UI is presented, and the user must select the file they would like to use as their DB. The
+LocalBookingService is then started in the same VM with the selected DB.
+
+
+Server GUI
+    I decided that rather than having a simple start server button that I would display the
+options that the server is using to start as un-editable text fields. The server then has an exit button
+and the start server button is disabled as soon as the server is started.
+	I wanted to keep the error checking here to a minimum and assume human competence. So all I check for is that the file
+exists, and that the file is not a directory. After that it doesn't matter to the server if it is a java file, or a text file,
+or anything like that. It will assume the user has selected a file that fits the schema specified in the instructions file.
+
+Unbook button
+	I couldn't bring myself to not include an unbook button even though it isn't requested in the spec. It seemed crazy to me
+that someone could book a record and it would be booked for eternity. So I included it.
+
+
+======= 7. General decision and considerations =======
+
+48-hour booking
+	I didn't do anything around this. It is briefly mentioned in the spec but all hotel rooms in the db file are many
+years old as is. Some simple client side data comparison methods could be written client side easily but with this
+input data there is no point. This was not a "must" requirement.
+
+
+///88888888888888888///////////////////
+
+TODO :	CLEAN UP TO DOs and comments
+
+		The program must allow the user to specify the location of the database in both standalone and network mode and persist
+		the db configuration details in suncertify.properties file. The application must read the properties file to determine
+		the location of the db and display the data from the db.
+		
+		Finish this choices files
+		
+		Mention that there is no observer pattern, that the user must click search to update the client with latest server details
+		
+		Put in some logging
+		
+		Make sure every public method and class has a javadoc
+		
+///88888888888888888///////////////////
+
+Packaging structure
+    I divided the application structure into five packages, the application is
+started from the StartUp.java class which I placed into the suncertify.init package
+on it's own.
+The suncertify.util package is used to contain classes that can be used to
+provide common functionality across the application.
+The other packages are self-explanatory.
+
+
+
+Logging
+    I used extensive logging in the application, logging as Level.SEVERE for caught exceptions and
+    as Level.INFO for informative messages in the application flow.
+
+Rebooking of records
+    I do not allow re-booking of records or unbooking. It was not a must requirement
+and I believe it is a security risk. If the CSR makes a mistake when entering the number
+carelessly then they cannot unbook the record. How would the application know whether it is the same
+CSR attempting to unbook the record or another unscrupulous CSR unbooking to make a record available for that CSR's
+clients? It would have needed additional implementation and I did not feel it added value to
+the application.
+
+	
