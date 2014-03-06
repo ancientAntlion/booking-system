@@ -1,7 +1,8 @@
 package suncertify.db.locking;
 
 import java.util.concurrent.ConcurrentHashMap;
-import suncertify.db.exceptions.SecurityException;
+
+import suncertify.db.SecurityException;
 
 /**
  * Manages all record locking. The class has a private static ConcurrentHashMap which

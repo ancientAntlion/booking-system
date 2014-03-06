@@ -8,11 +8,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import suncertify.db.exceptions.DatabaseInitializationException;
-import suncertify.db.exceptions.DuplicateKeyException;
-import suncertify.db.exceptions.RecordNotFoundException;
-import suncertify.db.exceptions.SecurityException;
-
 /**
  * Used to interact with the Database on the physical file system.
  * This class should exists to separate the physical disk operations from

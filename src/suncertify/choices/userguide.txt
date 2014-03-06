@@ -1,0 +1,153 @@
+---------------URLybird User Guide---------------
+
+----Table of Contents----
+1. Overview
+2. Application Modes
+3. Application Startup
+4. Running the server application
+5. Running the client application
+6. Running the standalone application (non-network/local mode)
+7. Using the URLyBird GUI
+
+
+
+----1. Overview----
+
+This application was created to help Customer Service Representatives with the hotel room booking process
+It displays available rooms to the user, allows the user to filter results by Hotel Name and Location
+and also provides room booking and unbooking functionality. The data the user is interacting with is
+supplied by a database file
+
+
+----2. Application Modes----
+
+The application has 3 modes, to run in each one a different command line parameter is passed into
+the runme.jar like so :
+
+    java -jar runme.jar <mode>
+
+To launch a client in local mode(no networking/RMI) the mode is Local
+	java -jar runme.jar Local
+	
+To launch a client in remote mode the mode is Remote
+	java -jar runme.jar Remote
+	
+To launch a server instance the mode is Server
+	java -jar runme.jar Server
+
+
+----3. Application Startup----
+
+Depending on which mode is selected the application will request different information from the user
+on startup.
+
+The users choices for these inputs are saved in the suncertify.properties file in the directory pointed
+to by the user.dir system property. So if the user changes the default "localhost" rmi host to "1.1.1.1"
+then the next time they launch a remote client that's what will display in the host choice textfield.
+Also the file chooser will navigate to the directory of the last used db file.
+
+All 3 modes configuration input are explained in the following sections
+
+----4. Local Client----
+
+To launch a client in local mode(no networking/RMI) the mode is Local
+	java -jar runme.jar Local
+	
+A local client is going to start the "server" in it's own local VM. In order to do this the user
+must select the file they wish to use as their database. On launch this mode will display a 
+file chooser. The user must navigate through their local drives to the .db file they wish to use.
+
+If the client is successful in loading the DB file then the GUI will display.
+
+Using the GUI is covered in section 7
+
+----5. Remote Client----
+
+To launch a client in remote mode the mode is Remote
+	java -jar runme.jar Remote
+
+A remote client will attempt to connect to a server over RMI, so it requires an IP address and port
+to connect to. This is requested in a textfield. Changing the port is not recommended since the
+server always starts on 1099.
+
+If the client is successful in connecting to the service with the hostname and port provided then
+the GUI will display.
+
+If a connection cannot be established the user will be given a "Connection refused to host" dialog,
+when the user clicks OK the process will be killed.
+
+Using the GUI is covered in section 7
+
+
+----6. Server----
+
+To launch a server instance the mode is Server
+	java -jar runme.jar Server
+
+A server will start a RemoteBookingService and attempt to export it over RMI on port 1099. So for this
+mode the user will need to select the file they wish to use as their database.On launch this mode will
+display a file chooser. The user must navigate through their local drives to the .db file they wish to use.
+
+If the server starts successfully the user will be shown a dialog saying "BookingService started".
+
+To stop the server the user must kill the process from the command line.
+
+
+
+----7. GUI----
+
+The GUI consists of a few components :
+
+1. A table containing all the records in the database.
+2. A text field used for filtering by hotel name.
+3. A text field used for filtering by locaion.
+4. A search button.
+5. A book button.
+6. An unbook button.
+
+****The GUI is static and is not updated with any changes that happen server side. So it is recommended that
+users refresh their UI by clicking the search button before booking or unbooking any rooms.*****
+
+
+Table :
+	The table displays the records retrieved from the database. When the GUI first starts this table
+will populate with all records in the DB. Clicking the search button while the "name" and "location"
+fields are empty will load all records from the DB.
+
+
+Search:
+    The user can filter the records that are displayed by entering text into the "name" and "location"
+fields and clicking the search button. If the user clicks the search button while these are empty then
+all records will be retreived and displayed in the table.
+
+	The text entered in the name/location will return any fields that either start with or are equal to the
+specified text respectively. For example searching a hotel name "R" will return all records that have a hotel
+name beginning with "R".
+
+**** The search is case sensitive and must match the exact data in the record. ****
+
+
+Create Booking:
+
+	The user can book records that are not already booked by another customer.
+	
+	The booking process is simple, the user must select a record from the table and click the "Create Booking"
+button. This will display a textfield where the user must enter a customer number. This number must be numerical
+and 8 numbers long exactly. Anything besides this will be declined.
+
+	If the customer number is valid it is written to the DB and the GUI is updated with the new latest records
+from the DB.
+
+	It is recommended that you refresh the GUI by clicking the search button before making any bookings
+
+
+Remove Booking :
+
+	The user can unbook records that are already booked.
+	
+	The unbooking process is simple, the user must select a record from the table and click the "Remove Booking"
+button. This will set the customer number to empty so the record can be booked again.
+
+	If the record is not already booked then the user will be notified
+	
+	It is recommended that you refresh the GUI by clicking the search button before making any unbookings

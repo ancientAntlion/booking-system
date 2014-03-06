@@ -2,10 +2,6 @@ package suncertify.db;
 
 import java.io.EOFException;
 
-import suncertify.db.exceptions.DatabaseInitializationException;
-import suncertify.db.exceptions.DuplicateKeyException;
-import suncertify.db.exceptions.RecordNotFoundException;
-import suncertify.db.exceptions.SecurityException;
 import suncertify.db.locking.LockingManager;
 
 /**

@@ -2,7 +2,8 @@ package suncertify.db.locking;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import suncertify.db.exceptions.SecurityException;
+
+import suncertify.db.SecurityException;
 
 /**
  * The object that controls the actual lock on records. The class uses a ReentrantLock lock

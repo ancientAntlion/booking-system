@@ -1,7 +1,5 @@
 package suncertify.shared.utilities;
 
-import java.io.File;
-
 import javax.swing.JFileChooser;
 
 /**
@@ -17,19 +15,21 @@ public class DBFileChooser {
 	 * Opens a JFileChooser and returns the String containing the full path to the selected file
 	 * 
 	 * @return filePath
+	 * @throws PropertyException 
 	 */
-	public static String selectFile() {
+	public static String selectFile() throws PropertyException {
 		
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File("src\\suncertify\\db\\"));
-        fileChooser.setSelectedFile(new File("db-1x3.db"));
+		PropertyManager propertyManager = PropertyManager.getInstance();
+		
+		String filePath = propertyManager.getProperty(PropertyManager.DB_FILE_PATH);
+				
+        JFileChooser fileChooser = new JFileChooser(filePath);
 
         int result = fileChooser.showOpenDialog(null);
-        String filePath = null;
 
         if (result == JFileChooser.APPROVE_OPTION)
         {
-        	filePath = fileChooser.getSelectedFile().getPath();            
+        	filePath = fileChooser.getSelectedFile().getAbsolutePath();
         }
         else if (result == JFileChooser.CANCEL_OPTION)
         {
@@ -39,6 +39,8 @@ public class DBFileChooser {
         {
         	System.exit(0);
         }
+        
+        propertyManager.setProperty(PropertyManager.DB_FILE_PATH, filePath);
         
         return filePath;
     

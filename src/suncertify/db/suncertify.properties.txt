@@ -1,5 +1,0 @@
-#UrlyBird Configuration
-#Mon Jul 15 192637 BST 2013
-dbPath=CUsersewibrosDocumentsNetBeansProjectssuncertifydb-1x3_test.db
-rmiHost=192.168.0.25
-rmiPort=1099

@@ -7,21 +7,12 @@ package suncertify.ui.exceptions;
 public class ServiceUnavailableException extends Exception {
 
 	private static final long serialVersionUID = -6722031589181134646L;
-
-	private final Exception exception;
-
+	
 	/**
-	 * @param exception
+	 * @param message
 	 */
-	public ServiceUnavailableException(final Exception exception) {
-		this.exception = exception;
-	}
-
-	/**
-	 * @return the recNo
-	 */
-	public Exception getException() {
-		return exception;
+	public ServiceUnavailableException(final String message) {
+		super(message);
 	}
 
 }

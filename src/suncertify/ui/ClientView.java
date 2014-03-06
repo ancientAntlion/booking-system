@@ -173,58 +173,6 @@ public class ClientView extends JFrame {
 	}
 
 	/**
-	 * The Client launcher. This method takes a single command line arguement which must be either
-	 * "Local" or "Remote".
-	 * 
-	 * @param args
-	 */
-	public static void main(final String[] args) {
-		try{
-			final Mode mode = getMode(args);
-			final ClientView clientGUI = new ClientView(mode);
-			
-			clientGUI.addWindowListener(getClosingWindowAdapater());
-						
-			clientGUI.setVisible(true);
-		}catch(InvalidModeException ime){
-			JOptionPane.showMessageDialog(null, "Exception encountered with selected mode : " + ime.getMode());
-			return;
-		}catch(ConnectException ce){
-			JOptionPane.showMessageDialog(null, "Exception encountered while attempting to connect to server\n\n" + ce);
-			return;
-		}catch (final ServiceUnavailableException sue) {
-			JOptionPane.showMessageDialog(null, "ServiceUnavailableException encountered - " + sue.getException().getMessage());
-			return;
-		}catch (final BookingServiceException bse) {
-			JOptionPane.showMessageDialog(null, bse);
-			return;
-		}catch(Exception e){
-			JOptionPane.showMessageDialog(null, "Exception encountered\n\n" + e);
-			return;
-		}
-
-	}
-	
-	/**
-	 * Takes the command line arguments, determines the mode and returns it.
-	 * 
-	 * @param args
-	 * @return
-	 * @throws InvalidModeException
-	 */
-	private static Mode getMode(final String[] args) throws InvalidModeException {
-		if(args.length == 0){
-			throw new InvalidModeException();
-		}else if(args[0].equalsIgnoreCase("LOCAL")){
-			return Mode.LOCAL;
-		}else if(args[0].equalsIgnoreCase("REMOTE")){
-			return Mode.REMOTE;
-		}else{
-			throw new InvalidModeException(args[0]);
-		}
-	}
-
-	/**
 	 * Initializes the table
 	 * 
 	 * @param tableModel
@@ -309,7 +257,7 @@ public class ClientView extends JFrame {
 					JOptionPane.showMessageDialog(null, bse.getMessage());
 					System.exit(0);
 				}catch(final ServiceUnavailableException sue){
-					JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+					JOptionPane.showMessageDialog(null, sue.getMessage());
 					System.exit(0);
 				}
 			}
@@ -340,9 +288,9 @@ public class ClientView extends JFrame {
 		} catch (final InvalidCustomerIDException icide) {
 			JOptionPane.showMessageDialog(mainPanel, "Invalid format!");
 		} catch (final BookingServiceException bse) {
-			JOptionPane.showMessageDialog(mainPanel, bse);
+			JOptionPane.showMessageDialog(mainPanel, bse.getMessage());
 		} catch (final ServiceUnavailableException sue) {
-			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			JOptionPane.showMessageDialog(null, sue.getMessage());
 			System.exit(0);
 		}
 	}
@@ -364,27 +312,10 @@ public class ClientView extends JFrame {
 			JOptionPane.showMessageDialog(mainPanel,
 					"Record has not been booked!");
 		} catch (ServiceUnavailableException sue) {
-			JOptionPane.showMessageDialog(null, sue.getException().getMessage());
+			JOptionPane.showMessageDialog(null, sue.getMessage());
 			System.exit(0);
 		}
 		
-	}
-	
-	
-	/**
-	 * Initializes a WindowAdapter that will kill our client process if client window is closed
-	 * 
-	 * @return windowAdapter
-	 */
-	private static WindowAdapter getClosingWindowAdapater(){
-		WindowAdapter windowAdapter = new WindowAdapter() {
-		    @Override
-		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-		    	System.exit(0);
-		    }
-		};
-		
-		return windowAdapter;
 	}
 	
 }

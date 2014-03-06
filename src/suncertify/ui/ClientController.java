@@ -4,19 +4,20 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.Registry;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.table.TableModel;
 
-import suncertify.db.exceptions.DatabaseInitializationException;
+import suncertify.db.DatabaseInitializationException;
 import suncertify.server.LocalBookingService;
 import suncertify.server.LocalBookingServiceImpl;
 import suncertify.server.RemoteBookingService;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
 import suncertify.shared.utilities.DBFileChooser;
+import suncertify.shared.utilities.PropertyException;
+import suncertify.shared.utilities.PropertyManager;
 import suncertify.ui.exceptions.InvalidCustomerIDException;
 import suncertify.ui.exceptions.ServiceUnavailableException;
 
@@ -55,7 +56,13 @@ public class ClientController {
 		try {
 			this.mode = mode;
 			if (this.mode.equals(Mode.LOCAL)) {
-				final String filePath = DBFileChooser.selectFile();
+				String filePath = null;
+				try{
+					filePath = DBFileChooser.selectFile();
+				}catch(final PropertyException pe){
+					JOptionPane.showMessageDialog(null, "Encountered a problem with loading/writing properties : " + pe);
+					System.exit(0);
+				}
 				
 				if(filePath == null){
 					JOptionPane.showMessageDialog(null, "An error occurred.");
@@ -65,20 +72,24 @@ public class ClientController {
 				remoteBookingService = null;
 			} else {
 				localBookingService = null;
+				String url = null;
+				try{
+					url = getRmiUrl();
+				}catch(final PropertyException pe){
+					JOptionPane.showMessageDialog(null, "Encountered a problem with loading/writing properties : " + pe);
+					System.exit(0);
+				}
 				
-				String serverAddress = JOptionPane.showInputDialog("Server Address", "localhost:" + Registry.REGISTRY_PORT);
-				
-				final String url = "rmi://" + serverAddress + "/" + SERVICE_NAME;
 				remoteBookingService = (RemoteBookingService) Naming.lookup(url);
 			}
 		} catch (final RemoteException re) {
-			throw new ServiceUnavailableException(re);
+			throw new ServiceUnavailableException(re.getMessage());
 		} catch (final NotBoundException nbe) {
-			throw new ServiceUnavailableException(nbe);
+			throw new ServiceUnavailableException(nbe.getMessage());
 		} catch (final MalformedURLException mue){
-			throw new ServiceUnavailableException(mue);
+			throw new ServiceUnavailableException(mue.getMessage());
 		} catch (final DatabaseInitializationException die){
-			throw new ServiceUnavailableException(die);
+			throw new ServiceUnavailableException(die.getMessage());
 		}
 	}
 
@@ -99,7 +110,7 @@ public class ClientController {
 			try {
 				allEntries = remoteBookingService.find(null, null);
 			} catch (final RemoteException re) {
-				throw new ServiceUnavailableException(re);
+				throw new ServiceUnavailableException(re.getMessage());
 			}
 		}
 
@@ -127,7 +138,7 @@ public class ClientController {
 			try {
 				matchingEntries = remoteBookingService.find(name, location);
 			} catch (final RemoteException re) {
-				throw new ServiceUnavailableException(re);
+				throw new ServiceUnavailableException(re.getMessage());
 			}
 		}
 
@@ -162,7 +173,7 @@ public class ClientController {
 			try {
 				remoteBookingService.book(record.getRecordNumber(), customerID);
 			} catch (final RemoteException re) {
-				throw new ServiceUnavailableException(re);
+				throw new ServiceUnavailableException(re.getMessage());
 			}
 		}
 
@@ -185,7 +196,7 @@ public class ClientController {
 			try {
 				remoteBookingService.unbook(record.getRecordNumber());
 			} catch (final RemoteException re) {
-				throw new ServiceUnavailableException(re);
+				throw new ServiceUnavailableException(re.getMessage());
 			}
 		}
 
@@ -203,6 +214,40 @@ public class ClientController {
 		}
 
 		return false;
+	}
+	
+	/**
+	 * Contacts the PropertyManager, loads the initial rmi values into an input dialog and
+	 * Saves the values that the user specifies into the PropertyManager afterward. Then
+	 * Returns an rmiUrl that can be used to lookup the service
+	 * 
+	 * @return rmiUrl
+	 * @throws PropertyException
+	 */
+	private String getRmiUrl() throws PropertyException{
+			PropertyManager propertyManager = PropertyManager.getInstance();
+			String rmiHost = propertyManager.getProperty(PropertyManager.RMI_HOST);
+			String rmiPort = propertyManager.getProperty(PropertyManager.RMI_PORT);
+			
+			String serverAddress = JOptionPane.showInputDialog("Server Address", rmiHost + ":" + rmiPort);
+			
+			if(serverAddress == null){
+				//Cancel was clicked, quitting the program
+				System.exit(0);
+			}
+			
+			try{
+				rmiHost = serverAddress.substring(0, serverAddress.indexOf(":"));
+				rmiPort = serverAddress.substring(serverAddress.indexOf(":")+1);
+			}catch(Exception e){
+				JOptionPane.showMessageDialog(null, "Invalid RMI host supplied");
+				System.exit(0);
+			}
+			
+			propertyManager.setProperty(PropertyManager.RMI_HOST, rmiHost);
+			propertyManager.setProperty(PropertyManager.RMI_PORT, rmiPort);
+			
+			return "rmi://" + serverAddress + "/" + SERVICE_NAME;
 	}
 
 }

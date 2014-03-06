@@ -4,9 +4,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import suncertify.db.Data;  
-import suncertify.db.exceptions.DatabaseInitializationException;
-import suncertify.db.exceptions.RecordNotFoundException;
-import suncertify.db.exceptions.SecurityException;
+import suncertify.db.DatabaseInitializationException;
+import suncertify.db.RecordNotFoundException;
+import suncertify.db.SecurityException;
   
 /** 
  * The <code>DataClassTest</code> tests the main functionalities of the 
@@ -57,7 +57,7 @@ public class DataTest {
              * time, but if you want, you can increase the controller variable, 
              * so it is executed as many times as you want 
              */  
-            for (int i = 0; i < 100; i++) {  
+            for (int i = 0; i < 2000; i++) {  
                 Thread updatingRandom = new UpdatingRandomRecordThread();  
                 updatingRandom.start();  
                 Thread updatingRecord1 = new UpdatingRecord1Thread();  

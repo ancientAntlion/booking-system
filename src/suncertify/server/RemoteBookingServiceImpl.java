@@ -6,9 +6,9 @@ import java.util.List;
 
 import suncertify.db.DB;
 import suncertify.db.Data;
-import suncertify.db.exceptions.DatabaseInitializationException;
-import suncertify.db.exceptions.RecordNotFoundException;
-import suncertify.db.exceptions.SecurityException;
+import suncertify.db.DatabaseInitializationException;
+import suncertify.db.RecordNotFoundException;
+import suncertify.db.SecurityException;
 import suncertify.server.exceptions.BookingServiceException;
 import suncertify.shared.model.Record;
 

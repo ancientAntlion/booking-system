@@ -4,9 +4,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import suncertify.db.Data;  
-import suncertify.db.exceptions.DatabaseInitializationException;
-import suncertify.db.exceptions.RecordNotFoundException;
-import suncertify.db.exceptions.SecurityException;
+import suncertify.db.DatabaseInitializationException;
+import suncertify.db.RecordNotFoundException;
+import suncertify.db.SecurityException;
   
 /** 
  * The <code>DataClassTest</code> tests the main functionalities of the 

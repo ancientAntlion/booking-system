@@ -35,14 +35,15 @@ public class ClientTableModel extends AbstractTableModel {
     
     /**
      * @param recordNumber
-     * @return
+     * @return record
      */
     public Record getRecord(final int recordNumber){
     	return recordList.get(recordNumber);
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.AbstractTableModel#getColumnName(int)
+    /**
+     * @param columnIndex
+     * @return columnName
      */
     @Override
     public String getColumnName(int columnIndex)
@@ -50,8 +51,10 @@ public class ClientTableModel extends AbstractTableModel {
         return columnNames[columnIndex];
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.AbstractTableModel#isCellEditable(int, int)
+    /**
+     * @param row
+     * @param columnIndex
+     * @return false
      */
     @Override
     public boolean isCellEditable(int row, int columnIndex)
@@ -59,8 +62,10 @@ public class ClientTableModel extends AbstractTableModel {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getValueAt(int, int)
+    /**
+     * @param row
+     * @param columnIndex
+     * @return value
      */
     @Override
     public Object getValueAt(int row, int column)
@@ -74,8 +79,8 @@ public class ClientTableModel extends AbstractTableModel {
         return record.getRecordData()[column];
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getRowCount()
+    /**
+     * @return rowCount
      */
     @Override
     public int getRowCount()
@@ -83,8 +88,8 @@ public class ClientTableModel extends AbstractTableModel {
         return recordList.size();
     }
 
-    /* (non-Javadoc)
-     * @see javax.swing.table.TableModel#getColumnCount()
+    /**
+     * @return columnCount
      */
     @Override
     public int getColumnCount()
